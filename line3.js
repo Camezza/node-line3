@@ -28,7 +28,7 @@ class Line3 {
         return new Line3(this.a.x * x, this.a.y * y, this.a.z * z, this.b.x * x, this.b.y * y, this.b.z * z);
     }
 
-    setDilate(x, y, z) {
+    setDilation(x, y, z) {
         this.a.multiply(x, y, z);
         this.b.multiply(x, y, z);
     }
@@ -37,12 +37,12 @@ class Line3 {
         return new Line3(this.a.x / x, this.a.y / y, this.a.z / z, this.b.x / x, this.b.y / y, this.b.z / z);
     }
 
-    setCompress(x, y, z) {
+    setCompression(x, y, z) {
         this.a.divide(x, y, z);
         this.b.divide(x, y, z);
     }
 
-    // acts as a circular normal, shifting point B by a specified angle
+    // acts as a circular normal, changing point B by a specified angle and rotating on point A.
     rotate(yaw, pitch) {
         let hRad = Math.sqrt((this.b.z - this.a.z) ** 2 + (this.b.x - this.a.x) ** 2);
         let vRad = Math.sqrt((this.b.y - this.a.y) ** 2 + (this.b.x - this.a.x) ** 2);
@@ -51,7 +51,7 @@ class Line3 {
         return new Line3(this.a.x, this.a.y, this.a.z, Math.cos(hAngle) * hRad, Math.sin(vAngle) * vRad, Math.sin(hAngle) * hRad);
     }
 
-    setRotate(yaw, pitch) {
+    setRotation(yaw, pitch) {
         let hRad = Math.sqrt((this.b.z - this.a.z) ** 2 + (this.b.x - this.a.x) ** 2);
         let vRad = Math.sqrt((this.b.y - this.a.y) ** 2 + (this.b.x - this.a.x) ** 2);
         let hAngle = Math.atan2((this.b.z - this.a.z), (this.b.x - this.a.x)) + yaw;
