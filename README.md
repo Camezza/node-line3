@@ -1,2 +1,2 @@
 # node-line3
- 3D line mathematical functions in nodeJS
+Mathematical functions for 3D lines in nodeJS
