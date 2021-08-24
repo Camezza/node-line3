@@ -42,22 +42,53 @@ class Line3 {
         this.b.divide(x, y, z);
     }
 
-    // acts as a circular normal, changing point B by a specified angle and rotating on point A.
-    rotate(yaw, pitch) {
-        let hRad = Math.sqrt((this.b.z - this.a.z) ** 2 + (this.b.x - this.a.x) ** 2);
-        let vRad = Math.sqrt((this.b.y - this.a.y) ** 2 + (this.b.x - this.a.x) ** 2);
-        let hAngle = Math.atan2((this.b.z - this.a.z), (this.b.x - this.a.x)) + yaw;
-        let vAngle = Math.atan2((this.b.y - this.a.y), (this.b.x - this.a.x)) + pitch;
-        return new Line3(this.a.x, this.a.y, this.a.z, Math.cos(hAngle) * hRad, Math.sin(vAngle) * vRad, Math.sin(hAngle) * hRad);
+    /*
+        let xzRad = Math.sqrt(difference.x ** 2 + difference.z ** 2);
+        let xyRad = Math.sqrt(difference.x ** 2 + difference.y ** 2);
+        let zyRad = Math.sqrt(difference.z ** 2 + difference.y ** 2);
+    */
+
+    getMatrix() {
+        let difference = this.b.minus(this.a);
+        let xyzRad = Math.sqrt(difference.x ** 2 + difference.y ** 2 + difference.z ** 2);
+
+        // define axis rotations based on eular axis radius
+        let xRotation = Math.asin(difference.y/xyzRad);
+        let yRotation = Math.asin(difference.z/xyzRad);
+        let zRotation = Math.asin(difference.x/xyzRad);
+        return new vec3(xRotation, yRotation, zRotation);
     }
 
-    setRotation(yaw, pitch) {
+    // acts as a circular normal, changing point B by a specified angle and rotating on point A.
+    rotate(x, y, z) {
+        let difference = this.b.minus(this.a);
+        let xyzRad = Math.sqrt(difference.x ** 2 + difference.y ** 2 + difference.z ** 2);
+        let xRotation = Math.asin(difference.y/xyzRad) + x;
+        let yRotation = Math.asin(difference.z/xyzRad) + y;
+        let zRotation = Math.asin(difference.x/xyzRad) + z;
+
+        return new Line3(this.a.x, this.a.y, this.a.z, xyzRad * Math.sin(xRotation), xyzRad * Math.sin(yRotation), xyzRad * Math.sin(zRotation));
+    }
+
+    rotate1(x, y, z) {
+        let difference = this.b.minus(this.a);
+        let xzRad = Math.sqrt(difference.x ** 2 + difference.z ** 2);
+        let xyRad = Math.sqrt(difference.x ** 2 + difference.y ** 2);
+        let zyRad = Math.sqrt(difference.z ** 2 + difference.y ** 2);
+
+        // define axis rotations based on eular axis radius
+        let xRotation = Math.asin(difference.z/zyRad);
+        let yRotation = Math.asin(difference.x/xzRad);
+        let zRotation = Math.asin(difference.x/xyRad);
+
+        return new Line3(this.a.x, this.a.y, this.a.z, this.b.x, this.b.y, this.b.z);
+    }
+
+    setRotation(yaw, pitch, roll) {
+        //https://www.youtube.com/watch?v=lVjFhNv2N8o
         let hRad = Math.sqrt((this.b.z - this.a.z) ** 2 + (this.b.x - this.a.x) ** 2);
-        let vRad = Math.sqrt((this.b.y - this.a.y) ** 2 + (this.b.x - this.a.x) ** 2);
         let hAngle = Math.atan2((this.b.z - this.a.z), (this.b.x - this.a.x)) + yaw;
-        let vAngle = Math.atan2((this.b.y - this.a.y), (this.b.x - this.a.x)) + pitch;
         this.b.x = Math.cos(hAngle) * hRad;
-        this.b.y = Math.sin(vAngle) * vRad;
         this.b.z = Math.sin(hAngle) * hRad;
     }
 
