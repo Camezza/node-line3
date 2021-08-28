@@ -1,4 +1,5 @@
 const vec3 = require(`vec3`);
+const valid = /^[xyzXYZ]+$/g;
 
 class Line3 {
     constructor(x1, y1, z1, x2, y2, z2) {
@@ -42,59 +43,71 @@ class Line3 {
         this.b.divide(x, y, z);
     }
 
-    /*
-        let xzRad = Math.sqrt(difference.x ** 2 + difference.z ** 2);
-        let xyRad = Math.sqrt(difference.x ** 2 + difference.y ** 2);
-        let zyRad = Math.sqrt(difference.z ** 2 + difference.y ** 2);
-    */
-
-    getMatrix() {
-        let difference = this.b.minus(this.a);
-        let xyzRad = Math.sqrt(difference.x ** 2 + difference.y ** 2 + difference.z ** 2);
-
-        // define axis rotations based on eular axis radius
-        let xRotation = Math.asin(difference.y/xyzRad);
-        let yRotation = Math.asin(difference.z/xyzRad);
-        let zRotation = Math.asin(difference.x/xyzRad);
-        return new vec3(xRotation, yRotation, zRotation);
-    }
-
     // acts as a circular normal, changing point B by a specified angle and rotating on point A.
-    rotate(x, y, z) {
+    rotateMatrix(matrix, order) {
+        let axis = order.match(valid);
         let difference = this.b.minus(this.a);
-        let xyzRad = Math.sqrt(difference.x ** 2 + difference.y ** 2 + difference.z ** 2);
-        let xRotation = Math.asin(difference.y/xyzRad) + x;
-        let yRotation = Math.asin(difference.z/xyzRad) + y;
-        let zRotation = Math.asin(difference.x/xyzRad) + z;
+        let length = Math.sqrt(difference.x ** 2 + difference.y ** 2 + difference.z ** 2);
+        let radius = Math.sqrt(length ** 2 / 3);
+        let x = radius, y = radius, z = radius;
 
-        return new Line3(this.a.x, this.a.y, this.a.z, xyzRad * Math.sin(xRotation), xyzRad * Math.sin(yRotation), xyzRad * Math.sin(zRotation));
+        // verify we have the correct data
+        if (!Array.isArray(matrix) || matrix.length === 0) throw new TypeError(`Invalid matrix specified. Must be an array of at least 1 Eucledian angle(s).`);
+        if (!axis) throw new TypeError(`Invalid order specified. Must be a string containing at least one concatenated xyz value.`);
+        if (matrix.length !== axis[0].length) throw new Error(`Matrix length must match the order length.`);
+
+        for (let i = 0, il = axis[0].length; i < il; i++) {
+            let xo = x, yo = y, zo = z;
+            if (axis[0][i] === 'x') {
+                z = zo * Math.cos(matrix[i]) - yo * Math.sin(matrix[i]);
+                y = zo * Math.sin(matrix[i]) + yo * Math.cos(matrix[i]);
+            }
+
+            else if (axis[0][i] === 'y') {
+                x = xo * Math.cos(matrix[i]) - zo * Math.sin(matrix[i]);
+                z = xo * Math.sin(matrix[i]) + zo * Math.cos(matrix[i]);
+            }
+
+            else if (axis[0][i] === 'z') {
+                y = yo * Math.cos(matrix[i]) - xo * Math.sin(matrix[i]);
+                x = yo * Math.sin(matrix[i]) + xo * Math.cos(matrix[i]);
+            }
+        }
+        return new Line3(this.a.x, this.a.y, this.a.z, this.a.x + x, this.a.y + y, this.a.z + z);
     }
 
-    rotate1(x, y, z) {
+    setMatrix(matrix, order) {
+        let axis = order.match(valid);
         let difference = this.b.minus(this.a);
-        let xzRad = Math.sqrt(difference.x ** 2 + difference.z ** 2);
-        let xyRad = Math.sqrt(difference.x ** 2 + difference.y ** 2);
-        let zyRad = Math.sqrt(difference.z ** 2 + difference.y ** 2);
+        let length = Math.sqrt(difference.x ** 2 + difference.y ** 2 + difference.z ** 2);
+        let radius = Math.sqrt(length ** 2 / 3);
+        let x = radius, y = radius, z = radius;
 
-        // define axis rotations based on eular axis radius
-        let xRotation = Math.asin(difference.z/zyRad);
-        let yRotation = Math.asin(difference.x/xzRad);
-        let zRotation = Math.asin(difference.x/xyRad);
+        // verify we have the correct data
+        if (!Array.isArray(matrix) || matrix.length === 0) throw new TypeError(`Invalid matrix specified. Must be an array of at least 1 Eucledian angle(s).`);
+        if (!axis) throw new TypeError(`Invalid order specified. Must be a string containing at least one concatenated xyz value.`);
+        if (matrix.length !== axis[0].length) throw new Error(`Matrix length must match the order length.`);
 
-        return new Line3(this.a.x, this.a.y, this.a.z, this.b.x, this.b.y, this.b.z);
-    }
+        for (let i = 0, il = axis[0].length; i < il; i++) {
+            let xo = x, yo = y, zo = z;
+            if (axis[0][i] === 'x') {
+                z = zo * Math.cos(matrix[i]) - yo * Math.sin(matrix[i]);
+                y = zo * Math.sin(matrix[i]) + yo * Math.cos(matrix[i]);
+            }
 
-    setRotation(yaw, pitch, roll) {
-        //https://www.youtube.com/watch?v=lVjFhNv2N8o
-        let hRad = Math.sqrt((this.b.z - this.a.z) ** 2 + (this.b.x - this.a.x) ** 2);
-        let hAngle = Math.atan2((this.b.z - this.a.z), (this.b.x - this.a.x)) + yaw;
-        this.b.x = Math.cos(hAngle) * hRad;
-        this.b.z = Math.sin(hAngle) * hRad;
-    }
+            else if (axis[0][i] === 'y') {
+                x = xo * Math.cos(matrix[i]) - zo * Math.sin(matrix[i]);
+                z = xo * Math.sin(matrix[i]) + zo * Math.cos(matrix[i]);
+            }
 
-    // intercept with another 3d line
-    intercept(line) {
-
+            else if (axis[0][i] === 'z') {
+                y = yo * Math.cos(matrix[i]) - xo * Math.sin(matrix[i]);
+                x = yo * Math.sin(matrix[i]) + xo * Math.cos(matrix[i]);
+            }
+        }
+        this.b.x = this.a.x + x;
+        this.b.y = this.a.y + y;
+        this.b.z = this.a.z + z;
     }
 }
 
