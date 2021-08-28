@@ -46,8 +46,7 @@ class Line3 {
     // acts as a circular normal, changing point B by a specified angle and rotating on point A.
     rotateMatrix(matrix, order) {
         let axis = order.match(valid);
-        let difference = this.b.minus(this.a);
-        let length = Math.sqrt(difference.x ** 2 + difference.y ** 2 + difference.z ** 2);
+        let length = this.a.distanceTo(this.b);
         let radius = Math.sqrt(length ** 2 / 3);
         let x = radius, y = radius, z = radius;
 
@@ -78,8 +77,7 @@ class Line3 {
 
     setMatrix(matrix, order) {
         let axis = order.match(valid);
-        let difference = this.b.minus(this.a);
-        let length = Math.sqrt(difference.x ** 2 + difference.y ** 2 + difference.z ** 2);
+        let length = this.a.distanceTo(this.b);
         let radius = Math.sqrt(length ** 2 / 3);
         let x = radius, y = radius, z = radius;
 
