@@ -151,37 +151,36 @@ class Line3 {
 
 
     intercept(line) {
-        // x function for y
+        // y=mx+b
         let m1 = this.xyGradient(), m2 = line.xyGradient();
         let b1 = this.xyOffset(m1), b2 = line.xyOffset(m2);
         let x = (b2-b1)/(m1-m2);
 
-        // z function for y
+        // y=nz+c
         let n1 = this.zyGradient(), n2 = line.zyGradient();
         let c1 = this.zyOffset(n1), c2 = line.zyOffset(n2);
         let z = (c2-c1)/(n1-n2); 
 
-        // determine y value
-        let y = m1*x + b1;
+        // determine both values sit on the same line
+        let yx = m1*x + b1;
+        let yz = n1*z + c1;
 
-        // determine line restrictions (not infinite)
-        let x1Check = (this.a.x <= x && x <= this.b.x) || (this.b.x <= x && x <= this.a.x);
-        let y1Check = (this.a.y <= y && y <= this.b.y) || (this.b.y <= y && y <= this.a.y);
-        let z1Check = (this.a.z <= z && z <= this.b.z) || (this.b.z <= z && z <= this.a.z);
+        if (yx === yz) {
+            let y = yx;
+            // determine line restrictions (not infinite)
+            let x1Check = (this.a.x <= x && x <= this.b.x) || (this.b.x <= x && x <= this.a.x);
+            let y1Check = (this.a.y <= y && y <= this.b.y) || (this.b.y <= y && y <= this.a.y);
+            let z1Check = (this.a.z <= z && z <= this.b.z) || (this.b.z <= z && z <= this.a.z);
 
-        let x2Check = (line.a.x <= x && x <= line.b.x) || (line.b.x <= x && x <= line.a.x);
-        let y2Check = (line.a.y <= y && y <= line.b.y) || (line.b.y <= y && y <= line.a.y);
-        let z2Check = (line.a.z <= z && z <= line.b.z) || (line.b.z <= z && z <= line.a.z);
-        
-        if (x1Check && x2Check && y1Check && y2Check && z1Check && z2Check) {
-            return new vec3(x, y, z);
+            let x2Check = (line.a.x <= x && x <= line.b.x) || (line.b.x <= x && x <= line.a.x);
+            let y2Check = (line.a.y <= y && y <= line.b.y) || (line.b.y <= y && y <= line.a.y);
+            let z2Check = (line.a.z <= z && z <= line.b.z) || (line.b.z <= z && z <= line.a.z);
+
+            if (x1Check && x2Check && y1Check && y2Check && z1Check && z2Check) {
+                return new vec3(x, y, z);
+            }
         }
-
         return null;
-    }
-
-    polyIntercept() {
-
     }
 }
 

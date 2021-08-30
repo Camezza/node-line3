@@ -1,8 +1,8 @@
 const line3 = require(`./line3`);
 const plot = require(`nodeplotlib`);
 const { Vec3 } = require("vec3");
-let lineA = new line3(4, -10, 6, 10, 10, 10); 
-let lineB = new line3(-10, -10, -10, 10, 9, 99);
+let lineA = new line3(-10, -10, -10, 10, 10, 10).offset(4, 2, 2); 
+let lineB = new line3(10, -10, 10, -10, 10, -10).offset(2, 4, 2);
 
 console.log(`1A:\n(${lineA.a.x}, ${lineA.a.z}, ${lineA.a.y})\n1B:\n(${lineA.b.x}, ${lineA.b.z}, ${lineA.b.y})`);
 console.log(`2A:\n(${lineB.a.x}, ${lineB.a.z}, ${lineB.a.y})\n2B:\n(${lineB.b.x}, ${lineB.b.z}, ${lineB.b.y})`);
@@ -17,7 +17,28 @@ for (let i = 0, il = 360; i < il; i += 360/36) {
 }
 */
 intercept = intercept || new Vec3(0, 0, 0);
+plot.plot([
+    {
+        x: [lineA.a.x, lineA.b.x], 
+        y: [lineA.a.z, lineA.b.z], 
+        z: [lineA.a.y, lineA.b.y], 
+        type: 'scatter3d'
+    },
+    {
+        x: [lineB.a.x, lineB.b.x], 
+        y: [lineB.a.z, lineB.b.z], 
+        z: [lineB.a.y, lineB.b.y], 
+        type: 'scatter3d'
+    },
+    {
+        x: [intercept.x], 
+        y: [intercept.y], 
+        z: [intercept.z],   
+        type: 'scatter3d'
+    }
+])
 
+/*
 for (let i = 0; i < 360; i += 45) {
     let line1 = lineA.rotateMatrix([Math.PI * i/180, Math.PI * i/180], `xz`);
     let line2 = lineB.rotateMatrix([-Math.PI * i/180, -Math.PI * i/180], `xz`);
@@ -42,3 +63,4 @@ plot.plot([
     }
 ])
 }
+*/
