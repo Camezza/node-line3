@@ -7,6 +7,10 @@ class Line3 {
         this.b = new vec3(x2, y2, z2);
     }
 
+    /*
+    **  Translations
+    */
+
     offset(x, y, z) {
         return new Line3(this.a.x + x, this.a.y + y, this.a.z + z, this.b.x + x, this.b.y + y, this.b.z + z);
     }
@@ -46,8 +50,7 @@ class Line3 {
     // acts as a circular normal, changing point B by a specified angle and rotating on point A.
     rotateMatrix(matrix, order) {
         let axis = order.match(valid);
-        let difference = this.b.minus(this.a);
-        let length = Math.sqrt(difference.x ** 2 + difference.y ** 2 + difference.z ** 2);
+        let length = this.a.distanceTo(this.b);
         let radius = Math.sqrt(length ** 2 / 3);
         let x = radius, y = radius, z = radius;
 
@@ -78,8 +81,7 @@ class Line3 {
 
     setMatrix(matrix, order) {
         let axis = order.match(valid);
-        let difference = this.b.minus(this.a);
-        let length = Math.sqrt(difference.x ** 2 + difference.y ** 2 + difference.z ** 2);
+        let length = this.a.distanceTo(this.b);
         let radius = Math.sqrt(length ** 2 / 3);
         let x = radius, y = radius, z = radius;
 
@@ -108,6 +110,77 @@ class Line3 {
         this.b.x = this.a.x + x;
         this.b.y = this.a.y + y;
         this.b.z = this.a.z + z;
+    }
+
+    /*
+    **  Functions
+    */
+
+    xyGradient() {
+        return (this.b.y-this.a.y)/(this.b.x-this.a.x);
+    }
+
+    zyGradient() {
+        return (this.b.y-this.a.y)/(this.b.z-this.a.z);
+    }
+
+    xzGradient() {
+        return (this.b.z-this.a.z)/(this.b.x-this.a.x);
+    }
+
+    yzGradient() {
+        return (this.b.z-this.a.z)/(this.b.y-this.a.y);
+    }
+
+
+    xyOffset(gradient) {
+        return this.a.y - (gradient || this.xyGradient()) * this.a.x;
+    }
+
+    zyOffset(gradient) {
+        return this.a.y - (gradient || this.zyGradient()) * this.a.z;
+    }
+
+    xzOffset(gradient) {
+        return this.a.z - (gradient || this.xzGradient()) * this.a.x;
+    }
+
+    yzOffset(gradient) {
+        return this.a.z - (gradient || this.yzGradient()) * this.a.y;
+    }
+
+
+    intercept(line) {
+        // y=mx+b
+        let m1 = this.xyGradient(), m2 = line.xyGradient();
+        let b1 = this.xyOffset(m1), b2 = line.xyOffset(m2);
+        let x = (b2-b1)/(m1-m2);
+
+        // y=nz+c
+        let n1 = this.zyGradient(), n2 = line.zyGradient();
+        let c1 = this.zyOffset(n1), c2 = line.zyOffset(n2);
+        let z = (c2-c1)/(n1-n2); 
+
+        // determine both values sit on the same line
+        let yx = m1*x + b1;
+        let yz = n1*z + c1;
+
+        if (yx === yz) {
+            let y = yx;
+            // determine line restrictions (not infinite)
+            let x1Check = (this.a.x <= x && x <= this.b.x) || (this.b.x <= x && x <= this.a.x);
+            let y1Check = (this.a.y <= y && y <= this.b.y) || (this.b.y <= y && y <= this.a.y);
+            let z1Check = (this.a.z <= z && z <= this.b.z) || (this.b.z <= z && z <= this.a.z);
+
+            let x2Check = (line.a.x <= x && x <= line.b.x) || (line.b.x <= x && x <= line.a.x);
+            let y2Check = (line.a.y <= y && y <= line.b.y) || (line.b.y <= y && y <= line.a.y);
+            let z2Check = (line.a.z <= z && z <= line.b.z) || (line.b.z <= z && z <= line.a.z);
+
+            if (x1Check && x2Check && y1Check && y2Check && z1Check && z2Check) {
+                return new vec3(x, y, z);
+            }
+        }
+        return null;
     }
 }
 
