@@ -167,7 +167,8 @@ class Line3 {
 
         if (yx === yz) {
             let y = yx;
-            // determine line restrictions (not infinite)
+
+            // determine line restrictions
             let x1Check = (this.a.x <= x && x <= this.b.x) || (this.b.x <= x && x <= this.a.x);
             let y1Check = (this.a.y <= y && y <= this.b.y) || (this.b.y <= y && y <= this.a.y);
             let z1Check = (this.a.z <= z && z <= this.b.z) || (this.b.z <= z && z <= this.a.z);
@@ -181,6 +182,70 @@ class Line3 {
             }
         }
         return null;
+    }
+
+    // determines where a line intercepts segments of a polygon
+    polyIntercept(segments) {
+        if (!Array.isArray(segments) && segments.length === 0) throw new TypeError(`Invalid polygon specified. Must be a two-dimensional array of rectangular segments.`);
+        let intercepts = [];
+
+        // y=mx+b
+        let m = this.xyGradient();
+        let b = this.xyOffset(m);
+
+        // y=nz+c
+        let n = this.zyGradient()
+        let c = this.zyOffset(n)
+
+        for (let rectangle of segments) {
+            if (!Array.isArray(rectangle) && !rectangle.length === 6) throw new TypeError(`Invalid polygon segment specified. Must include two groups of consecutive x, y, z values.`);
+
+            // determine if shape surfaces are within the restrictions of the lines in one dimension
+            // account for both yx and yz values?
+
+            let xa = rectangle[0], xb = rectangle[3];
+            let ya = rectangle[1], yb = rectangle[4];
+            let za = rectangle[2], zb = rectangle[5];
+
+            // first, we need to determine that the shape lies between each axis of the line
+            // hopefully this can be optimised because 100+ checks per rectangle isn't exactly ideal
+            let domX1 = (line.a.x <= xa && xa <= line.b.x) || (line.b.x <= xa && xa <= line.a.x);
+            let domX2 = (line.a.x <= xb && xb <= line.b.x) || (line.b.x <= xb && xb <= line.a.x);
+            let domY1 = (line.a.y <= ya && ya <= line.b.y) || (line.b.y <= yb && yb <= line.a.y);
+            let domY2 = (line.a.y <= yb && yb <= line.b.y) || (line.b.y <= yb && yb <= line.a.y);
+            let domZ1 = (line.a.z <= za && za <= line.b.z) || (line.b.z <= za && za <= line.a.z);
+            let domZ2 = (line.a.z <= zb && zb <= line.b.z) || (line.b.z <= zb && zb <= line.a.z);
+
+            // ^^^ POSSIBLY REDUNDANT ^^^
+
+            if (domX1 && domX2 && domY1 && domY2 && domZ1 && domZ2) {
+                // then, we need to find if the values from subbing the shape domains into the line equations actually fit inside the shapes
+                let lineX1 = (ya-b)/m;
+                let lineX2 = (yb-b)/m;
+
+                let lineZ1 = (ya-c)/n;
+                let lineZ2 = (yb-c)/n;
+
+                // two Y values will be present for both xy and zy planes, for now just check both of them
+                let lineYx1 = (m*xa)+b;
+                let lineYx2 = (m*xb)+b;
+
+                let lineYz1 = (n*za)+b;
+                let lineYz2 = (n*zb)+b;
+
+                domX1 = (xa <= lineX1 && lineX1 <= xb) || (xb <= lineX1 && lineX1 <= xa);
+                domX2 = (xa <= lineX2 && lineX2 <= xb) || (xb <= lineX2 && lineX2 <= xa);
+
+                domZ1 = (za <= lineZ1 && lineZ1 <= zb) || (zb <= lineZ1 && lineZ1 <= za);
+                domZ2 = (zb <= lineZ2 && lineZ2 <= zb) || (zb <= lineZ2 && lineZ2 <= zb);
+
+                let domYx1 = (ya <= lineYx1 && lineYx1 <= yb) || (yb <= lineYx1 && lineYx1 <= ya);
+                let domYx2 = (ya <= lineYx2 && lineYx2 <= yb) || (yb <= lineYx2 && lineYx2 <= ya);
+
+                let domYz1 = (ya <= lineYz1 && lineYz1 <= yb) || (yb <= lineYz1 && lineYz1 <= ya);
+                let domYz2 = (ya <= lineYz2 && lineYz2 <= yb) || (yb <= lineYz2 && lineYz2 <= ya);                
+            }
+        }
     }
 }
 
