@@ -159,7 +159,7 @@ class Line3 {
         // y=nz+c
         let n1 = this.zyGradient(), n2 = line.zyGradient();
         let c1 = this.zyOffset(n1), c2 = line.zyOffset(n2);
-        let z = (c2-c1)/(n1-n2); 
+        let z = (c2-c1)/(n1-n2);
 
         // determine both values sit on the same line
         let yx = m1*x + b1;
@@ -168,7 +168,7 @@ class Line3 {
         if (yx === yz) {
             let y = yx;
 
-            // determine line restrictions
+            // determine line restrictions in each dimension
             let x1Check = (this.a.x <= x && x <= this.b.x) || (this.b.x <= x && x <= this.a.x);
             let y1Check = (this.a.y <= y && y <= this.b.y) || (this.b.y <= y && y <= this.a.y);
             let z1Check = (this.a.z <= z && z <= this.b.z) || (this.b.z <= z && z <= this.a.z);
@@ -184,69 +184,75 @@ class Line3 {
         return null;
     }
 
-    // determines where a line intercepts segments of a polygon
     polyIntercept(segments) {
         if (!Array.isArray(segments) && segments.length === 0) throw new TypeError(`Invalid polygon specified. Must be a two-dimensional array of rectangular segments.`);
-        let intercepts = [];
 
         // y=mx+b
         let m = this.xyGradient();
         let b = this.xyOffset(m);
 
         // y=nz+c
-        let n = this.zyGradient()
-        let c = this.zyOffset(n)
+        let n = this.zyGradient();
+        let c = this.zyOffset(n);
 
         for (let rectangle of segments) {
             if (!Array.isArray(rectangle) && !rectangle.length === 6) throw new TypeError(`Invalid polygon segment specified. Must include two groups of consecutive x, y, z values.`);
+            
+            // these values have to be inside their polygon domains to be an intercept.
+            let xa = (rectangle[1]-b)/m;
+            let xb = (rectangle[4]-b)/m;
 
-            // determine if shape surfaces are within the restrictions of the lines in one dimension
-            // account for both yx and yz values?
+            let za = (rectangle[1]-c)/n;
+            let zb = (rectangle[4]-c)/n;
 
-            let xa = rectangle[0], xb = rectangle[3];
-            let ya = rectangle[1], yb = rectangle[4];
-            let za = rectangle[2], zb = rectangle[5];
+            let ya = (m*rectangle[0])+b;
+            let yb = (m*rectangle[3])+b;
 
-            // first, we need to determine that the shape lies between each axis of the line
-            // hopefully this can be optimised because 100+ checks per rectangle isn't exactly ideal
-            let domX1 = (line.a.x <= xa && xa <= line.b.x) || (line.b.x <= xa && xa <= line.a.x);
-            let domX2 = (line.a.x <= xb && xb <= line.b.x) || (line.b.x <= xb && xb <= line.a.x);
-            let domY1 = (line.a.y <= ya && ya <= line.b.y) || (line.b.y <= yb && yb <= line.a.y);
-            let domY2 = (line.a.y <= yb && yb <= line.b.y) || (line.b.y <= yb && yb <= line.a.y);
-            let domZ1 = (line.a.z <= za && za <= line.b.z) || (line.b.z <= za && za <= line.a.z);
-            let domZ2 = (line.a.z <= zb && zb <= line.b.z) || (line.b.z <= zb && zb <= line.a.z);
+            console.log(`xa: ${xa}\nxb: ${xb}\nza: ${za}\nzb: ${zb}\nya: ${ya}\nyb: ${yb}`);
 
-            // ^^^ POSSIBLY REDUNDANT ^^^
 
-            if (domX1 && domX2 && domY1 && domY2 && domZ1 && domZ2) {
-                // then, we need to find if the values from subbing the shape domains into the line equations actually fit inside the shapes
-                let lineX1 = (ya-b)/m;
-                let lineX2 = (yb-b)/m;
 
-                let lineZ1 = (ya-c)/n;
-                let lineZ2 = (yb-c)/n;
+            // X axis has no change
+            if (xa === xb) {
 
-                // two Y values will be present for both xy and zy planes, for now just check both of them
-                let lineYx1 = (m*xa)+b;
-                let lineYx2 = (m*xb)+b;
+                continue
+            }
 
-                let lineYz1 = (n*za)+b;
-                let lineYz2 = (n*zb)+b;
+            else if (za === zb) {
 
-                domX1 = (xa <= lineX1 && lineX1 <= xb) || (xb <= lineX1 && lineX1 <= xa);
-                domX2 = (xa <= lineX2 && lineX2 <= xb) || (xb <= lineX2 && lineX2 <= xa);
+                continue
+            }
 
-                domZ1 = (za <= lineZ1 && lineZ1 <= zb) || (zb <= lineZ1 && lineZ1 <= za);
-                domZ2 = (zb <= lineZ2 && lineZ2 <= zb) || (zb <= lineZ2 && lineZ2 <= zb);
+            else if (ya === yb) {
 
-                let domYx1 = (ya <= lineYx1 && lineYx1 <= yb) || (yb <= lineYx1 && lineYx1 <= ya);
-                let domYx2 = (ya <= lineYx2 && lineYx2 <= yb) || (yb <= lineYx2 && lineYx2 <= ya);
-
-                let domYz1 = (ya <= lineYz1 && lineYz1 <= yb) || (yb <= lineYz1 && lineYz1 <= ya);
-                let domYz2 = (ya <= lineYz2 && lineYz2 <= yb) || (yb <= lineYz2 && lineYz2 <= ya);                
+                continue
             }
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 module.exports = Line3;
