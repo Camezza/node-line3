@@ -187,6 +187,8 @@ class Line3 {
     polyIntercept(segments) {
         if (!Array.isArray(segments) && segments.length === 0) throw new TypeError(`Invalid polygon specified. Must be a two-dimensional array of rectangular segments.`);
 
+        let line = [this.a.x, this.a.y, this.a.z, this.b.x, this.b.y, this.b.z];
+
         // y=mx+b
         let m = this.xyGradient();
         let b = this.xyOffset(m);
@@ -198,6 +200,8 @@ class Line3 {
         for (let rectangle of segments) {
             if (!Array.isArray(rectangle) && !rectangle.length === 6) throw new TypeError(`Invalid polygon segment specified. Must include two groups of consecutive x, y, z values.`);
             
+            let intercepts = [];
+
             // these values have to be inside their polygon domains to be an intercept.
             let xa = (rectangle[1]-b)/m;
             let xb = (rectangle[4]-b)/m;
@@ -208,25 +212,40 @@ class Line3 {
             let ya = (m*rectangle[0])+b;
             let yb = (m*rectangle[3])+b;
 
-            console.log(`xa: ${xa}\nxb: ${xb}\nza: ${za}\nzb: ${zb}\nya: ${ya}\nyb: ${yb}`);
+            console.log(`
+            xa: ${xa} (Inside domain: ${(rectangle[0] <= xa && xa <= rectangle[3]) || (rectangle[3] <= xa && xa <= rectangle[0])}) (Inside line: ${(this.a.x <= xa && xa <= this.b.x) || (this.b.x <= xa && xa <= this.a.x)})
+            xb: ${xb} (Inside domain: ${(rectangle[0] <= xb && xb <= rectangle[3]) || (rectangle[3] <= xb && xb <= rectangle[0])}) (Inside line: ${(this.a.x <= xb && xb <= this.b.x) || (this.b.x <= xb && xb <= this.a.x)})
+            ya: ${ya} (Inside domain: ${(rectangle[1] <= ya && ya <= rectangle[4]) || (rectangle[4] <= ya && ya <= rectangle[1])}) (Inside line: ${(this.a.y <= ya && ya <= this.b.y) || (this.b.y <= ya && ya <= this.a.y)})
+            yb: ${yb} (Inside domain: ${(rectangle[1] <= yb && yb <= rectangle[4]) || (rectangle[4] <= yb && yb <= rectangle[1])}) (Inside line: ${(this.a.y <= yb && yb <= this.b.y) || (this.b.y <= yb && yb <= this.a.y)})
+            za: ${za} (Inside domain: ${(rectangle[2] <= za && za <= rectangle[5]) || (rectangle[5] <= za && za <= rectangle[2])}) (Inside line: ${(this.a.z <= za && za <= this.b.z) || (this.b.z <= za && za <= this.a.z)})
+            zb: ${zb} (Inside domain: ${(rectangle[2] <= zb && zb <= rectangle[5]) || (rectangle[5] <= zb && zb <= rectangle[2])}) (Inside line: ${(this.a.z <= zb && zb <= this.b.z) || (this.b.z <= zb && zb <= this.a.z)})
+            `);
 
+            // [xyz] values for restricted plane intercepts
+            let ra = [(rectangle[1]-b)/m, (m*rectangle[0])+b, (rectangle[1]-c)/n];
+            let rb = [(rectangle[4]-b)/m, (m*rectangle[3])+b, (rectangle[4]-c)/n];
 
+            for (let restriction of [ra,rb]) {
+                for (let i = 0, il = restriction.length; i < il; i++) {
+                    let constant = restriction[i];
+                    let polydomain = (rectangle[i] <= constant && constant <= rectangle[i+3]) || (rectangle[i+3] <= constant && constant <= rectangle[i]);
+                    let linedomain = (line[i] <= constant && constant <= line[i+3]) || (line[i+3] <= constant && constant <= line[i]);
 
-            // X axis has no change
-            if (xa === xb) {
+                    // xyz constant is within polygon and line radius (valid intercept)
+                    if (polydomain && linedomain) {
+                        if (i === 2) intercepts.push(new vec3((n*constant+c-b)/m, n*constant+c, constant)); // constant is z (re-arrange for x and y values)
+                        else if (i === 1) intercepts.push(new vec3((constant-b)/m, constant, (constant-c)/n)); // y
+                        else if (i === 0) intercepts.push(new vec3(constant, m*constant+b, (m*constant+b-c)/n)); // x
 
-                continue
+                        /*
+                        ** a break statement is needed here, emitted for debugging
+                        */
+                    }
+                }
             }
 
-            else if (za === zb) {
-
-                continue
-            }
-
-            else if (ya === yb) {
-
-                continue
-            }
+            console.log(intercepts);
+            return intercepts;
         }
     }
 

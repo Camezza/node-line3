@@ -1,11 +1,11 @@
 const line3 = require(`./line3`);
 const plot = require(`nodeplotlib`);
 let lines = [];
-let lineA = new line3(2.5, 2.5, 2.5, 5, 5, 5).rotateMatrix([Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI], 'xyz'); 
+let lineA = new line3(2.5, 2.5, 2.5, 10, 10, 10).rotateMatrix([2 * Math.random() * Math.PI, 2 * Math.random() * Math.PI], `xz`); 
 console.log(lineA)
 let polygon = [[0, 0, 0, 5, 5, 5]];
 
-lineA.polyIntercept(polygon);
+let intercepts = lineA.polyIntercept(polygon);
 
 for (let shape of polygon) {
     let x0 = shape[0], y0 = shape[1], z0 = shape[2];
@@ -50,6 +50,15 @@ for (let line of lines) {
         x: [line.a.x, line.b.x], 
         y: [line.a.z, line.b.z], 
         z: [line.a.y, line.b.y], 
+        type: 'scatter3d'
+    });
+}
+
+for (let intercept of intercepts) {
+    objects.push({
+        x: [intercept.x],
+        y: [intercept.z],
+        z: [intercept.y],
         type: 'scatter3d'
     });
 }
