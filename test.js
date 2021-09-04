@@ -1,7 +1,7 @@
 const line3 = require(`./line3`);
 const plot = require(`nodeplotlib`);
 let lines = [];
-let lineA = new line3(2.5, 2.5, 2.5, 10, 10, 10).rotateMatrix([2 * Math.random() * Math.PI, 2 * Math.random() * Math.PI], `xz`); 
+let lineA = new line3(-10, -10, -10, 10, 10, 10).offset(2,0,3);
 console.log(lineA)
 let polygon = [[0, 0, 0, 5, 5, 5]];
 

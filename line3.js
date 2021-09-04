@@ -199,9 +199,7 @@ class Line3 {
 
         for (let rectangle of segments) {
             if (!Array.isArray(rectangle) && !rectangle.length === 6) throw new TypeError(`Invalid polygon segment specified. Must include two groups of consecutive x, y, z values.`);
-            
-            let intercepts = [];
-
+        
             // these values have to be inside their polygon domains to be an intercept.
             let xa = (rectangle[1]-b)/m;
             let xb = (rectangle[4]-b)/m;
@@ -209,39 +207,58 @@ class Line3 {
             let za = (rectangle[1]-c)/n;
             let zb = (rectangle[4]-c)/n;
 
-            let ya = (m*rectangle[0])+b;
-            let yb = (m*rectangle[3])+b;
+            let yxa = (m*rectangle[0])+b;
+            let yxb = (m*rectangle[3])+b;
+
+            let yza = (n*rectangle[0])+c;
+            let yzb = (n*rectangle[3])+c;
 
             console.log(`
             xa: ${xa} (Inside domain: ${(rectangle[0] <= xa && xa <= rectangle[3]) || (rectangle[3] <= xa && xa <= rectangle[0])}) (Inside line: ${(this.a.x <= xa && xa <= this.b.x) || (this.b.x <= xa && xa <= this.a.x)})
             xb: ${xb} (Inside domain: ${(rectangle[0] <= xb && xb <= rectangle[3]) || (rectangle[3] <= xb && xb <= rectangle[0])}) (Inside line: ${(this.a.x <= xb && xb <= this.b.x) || (this.b.x <= xb && xb <= this.a.x)})
-            ya: ${ya} (Inside domain: ${(rectangle[1] <= ya && ya <= rectangle[4]) || (rectangle[4] <= ya && ya <= rectangle[1])}) (Inside line: ${(this.a.y <= ya && ya <= this.b.y) || (this.b.y <= ya && ya <= this.a.y)})
-            yb: ${yb} (Inside domain: ${(rectangle[1] <= yb && yb <= rectangle[4]) || (rectangle[4] <= yb && yb <= rectangle[1])}) (Inside line: ${(this.a.y <= yb && yb <= this.b.y) || (this.b.y <= yb && yb <= this.a.y)})
+            
+            yxa: ${yxa} (Inside domain: ${(rectangle[1] <= yxa && yxa <= rectangle[4]) || (rectangle[4] <= yxa && yxa <= rectangle[1])}) (Inside line: ${(this.a.y <= yxa && yxa <= this.b.y) || (this.b.y <= yxa && yxa <= this.a.y)})
+            yxb: ${yxb} (Inside domain: ${(rectangle[1] <= yxb && yxb <= rectangle[4]) || (rectangle[4] <= yxb && yxb <= rectangle[1])}) (Inside line: ${(this.a.y <= yxb && yxb <= this.b.y) || (this.b.y <= yxb && yxb <= this.a.y)})
+            
+            yza: ${yza} (Inside domain: ${(rectangle[1] <= yza && yza <= rectangle[4]) || (rectangle[4] <= yza && yza <= rectangle[1])}) (Inside line: ${(this.a.y <= yza && yza <= this.b.y) || (this.b.y <= yza && yza <= this.a.y)})
+            yzb: ${yzb} (Inside domain: ${(rectangle[1] <= yzb && yzb <= rectangle[4]) || (rectangle[4] <= yzb && yzb <= rectangle[1])}) (Inside line: ${(this.a.y <= yzb && yzb <= this.b.y) || (this.b.y <= yzb && yzb <= this.a.y)})
+            
             za: ${za} (Inside domain: ${(rectangle[2] <= za && za <= rectangle[5]) || (rectangle[5] <= za && za <= rectangle[2])}) (Inside line: ${(this.a.z <= za && za <= this.b.z) || (this.b.z <= za && za <= this.a.z)})
             zb: ${zb} (Inside domain: ${(rectangle[2] <= zb && zb <= rectangle[5]) || (rectangle[5] <= zb && zb <= rectangle[2])}) (Inside line: ${(this.a.z <= zb && zb <= this.b.z) || (this.b.z <= zb && zb <= this.a.z)})
             `);
 
-            // [xyz] values for restricted plane intercepts
-            let ra = [(rectangle[1]-b)/m, (m*rectangle[0])+b, (rectangle[1]-c)/n];
-            let rb = [(rectangle[4]-b)/m, (m*rectangle[3])+b, (rectangle[4]-c)/n];
+            // [x yx yz z] values for restricted plane intercepts
+            let ra = [(rectangle[1]-b)/m, (m*rectangle[0])+b, (n*rectangle[0])+c, (rectangle[1]-c)/n];
+            let rb = [(rectangle[4]-b)/m, (m*rectangle[3])+b, (n*rectangle[3])+c, (rectangle[4]-c)/n];
+            let query = [];
+
+            // perhaps it's screwing up because y has two values? (from x and z)
+            // so far only observed logical error within the z axis when ya, yb, za, zb are valid
 
             for (let restriction of [ra,rb]) {
-                for (let i = 0, il = restriction.length; i < il; i++) {
-                    let constant = restriction[i];
+                for (let i = 0, r = 0, il = 3; i < il; i++, r++) {
+                    let constant = restriction[r];
                     let polydomain = (rectangle[i] <= constant && constant <= rectangle[i+3]) || (rectangle[i+3] <= constant && constant <= rectangle[i]);
                     let linedomain = (line[i] <= constant && constant <= line[i+3]) || (line[i+3] <= constant && constant <= line[i]);
+                    if (r === 1) i--; // i still needs to reference another y value for yz
 
                     // xyz constant is within polygon and line radius (valid intercept)
                     if (polydomain && linedomain) {
-                        if (i === 2) intercepts.push(new vec3((n*constant+c-b)/m, n*constant+c, constant)); // constant is z (re-arrange for x and y values)
-                        else if (i === 1) intercepts.push(new vec3((constant-b)/m, constant, (constant-c)/n)); // y
-                        else if (i === 0) intercepts.push(new vec3(constant, m*constant+b, (m*constant+b-c)/n)); // x
-
-                        /*
-                        ** a break statement is needed here, emitted for debugging
-                        */
+                        if (r === 0) query.push(new vec3(constant, m*constant+b, (m*constant+b-c)/n)); // x
+                        else if (r === 1) query.push(new vec3((constant-b)/m, constant, (constant-c)/n)); // y (x)
+                        else if (r === 2) query.push(new vec3((constant-b)/m, constant, (constant-c)/n)); // y (z)
+                        else if (r === 3) query.push(new vec3((n*constant+c-b)/m, n*constant+c, constant)); // z
                     }
                 }
+            }
+
+            let intercepts = [];
+            for (let i of query) {
+                if (
+                    ((rectangle[0] <= i.x && i.x <= rectangle[3]) || (rectangle[3] <= i.x && i.x <= rectangle[0])) &&
+                    ((rectangle[1] <= i.y && i.y <= rectangle[4]) || (rectangle[4] <= i.y && i.y <= rectangle[1])) && 
+                    ((rectangle[2] <= i.z && i.z <= rectangle[5]) || (rectangle[5] <= i.z && i.z <= rectangle[2]))
+                ) intercepts.push(i);
             }
 
             console.log(intercepts);
