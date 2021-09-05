@@ -48,11 +48,9 @@ class Line3 {
     }
 
     // acts as a circular normal, changing point B by a specified angle and rotating on point A.
-    rotateMatrix(matrix, order) {
+    rotate(matrix, order) {
         let axis = order.match(valid);
-        let length = this.a.distanceTo(this.b);
-        let radius = Math.sqrt(length ** 2 / 3);
-        let x = radius, y = radius, z = radius;
+        let x = this.b.x, y = this.b.y, z = this.b.z;
 
         // verify we have the correct data
         if (!Array.isArray(matrix) || matrix.length === 0) throw new TypeError(`Invalid matrix specified. Must be an array of at least 1 Eucledian angle(s).`);
@@ -79,37 +77,13 @@ class Line3 {
         return new Line3(this.a.x, this.a.y, this.a.z, this.a.x + x, this.a.y + y, this.a.z + z);
     }
 
-    setMatrix(matrix, order) {
-        let axis = order.match(valid);
-        let length = this.a.distanceTo(this.b);
-        let radius = Math.sqrt(length ** 2 / 3);
-        let x = radius, y = radius, z = radius;
+    setRotation(matrix, order) {
+        let line = this.rotateMatrix(matrix, order);
+        this.a = line.a;
+        this.b = line.b;
+    }
 
-        // verify we have the correct data
-        if (!Array.isArray(matrix) || matrix.length === 0) throw new TypeError(`Invalid matrix specified. Must be an array of at least 1 Eucledian angle(s).`);
-        if (!axis) throw new TypeError(`Invalid order specified. Must be a string containing at least one concatenated xyz value.`);
-        if (matrix.length !== axis[0].length) throw new Error(`Matrix length must match the order length.`);
-
-        for (let i = 0, il = axis[0].length; i < il; i++) {
-            let xo = x, yo = y, zo = z;
-            if (axis[0][i] === 'x') {
-                z = zo * Math.cos(matrix[i]) - yo * Math.sin(matrix[i]);
-                y = zo * Math.sin(matrix[i]) + yo * Math.cos(matrix[i]);
-            }
-
-            else if (axis[0][i] === 'y') {
-                x = xo * Math.cos(matrix[i]) - zo * Math.sin(matrix[i]);
-                z = xo * Math.sin(matrix[i]) + zo * Math.cos(matrix[i]);
-            }
-
-            else if (axis[0][i] === 'z') {
-                y = yo * Math.cos(matrix[i]) - xo * Math.sin(matrix[i]);
-                x = yo * Math.sin(matrix[i]) + xo * Math.cos(matrix[i]);
-            }
-        }
-        this.b.x = this.a.x + x;
-        this.b.y = this.a.y + y;
-        this.b.z = this.a.z + z;
+    resetRotation() {
     }
 
     /*
@@ -120,12 +94,12 @@ class Line3 {
         return (this.b.y-this.a.y)/(this.b.x-this.a.x);
     }
 
-    zyGradient() {
-        return (this.b.y-this.a.y)/(this.b.z-this.a.z);
+    yxGradient() {
+        return (this.b.x-this.a.x)/(this.b.y-this.a.y);
     }
 
-    xzGradient() {
-        return (this.b.z-this.a.z)/(this.b.x-this.a.x);
+    zyGradient() {
+        return (this.b.y-this.a.y)/(this.b.z-this.a.z);
     }
 
     yzGradient() {
@@ -133,20 +107,18 @@ class Line3 {
     }
 
 
+
+
     xyOffset(gradient) {
         return this.a.y - (gradient || this.xyGradient()) * this.a.x;
     }
 
+    yzOffset(gradient) {
+        return this.a.x - (gradient || this.yxGradient()) * this.a.y;
+    }
+
     zyOffset(gradient) {
         return this.a.y - (gradient || this.zyGradient()) * this.a.z;
-    }
-
-    xzOffset(gradient) {
-        return this.a.z - (gradient || this.xzGradient()) * this.a.x;
-    }
-
-    yzOffset(gradient) {
-        return this.a.z - (gradient || this.yzGradient()) * this.a.y;
     }
 
 
@@ -189,20 +161,24 @@ class Line3 {
 
         let line = [this.a.x, this.a.y, this.a.z, this.b.x, this.b.y, this.b.z];
 
-        // y=mx+b
+        // y=m(x-d)+b
         let m = this.xyGradient();
         let b = this.xyOffset(m);
+        let d;
+        if (Math.abs(m) === Infinity) d = this.a.x; // infinite gradient, allow x constant to prevent runtime issues (NaN)
 
-        // y=nz+c
+        // y=n(z-e)+c
         let n = this.zyGradient();
         let c = this.zyOffset(n);
+        let e;
+        if (Math.abs(n) === Infinity) e = this.a.z;
 
         for (let rectangle of segments) {
             if (!Array.isArray(rectangle) && rectangle.length !== 6) throw new TypeError(`Invalid polygon segment specified. Must include two groups of consecutive x, y, z values.`);
         
             // [x yx yz z] values for restricted plane intercepts
-            let ra = [(rectangle[1]-b)/m, (m*rectangle[0])+b, (n*rectangle[0])+c, (rectangle[1]-c)/n];
-            let rb = [(rectangle[4]-b)/m, (m*rectangle[3])+b, (n*rectangle[3])+c, (rectangle[4]-c)/n];
+            let ra = [d || (rectangle[1]-b)/m, (m*rectangle[0])+b || Infinity, (n*rectangle[0])+c || Infinity, e || (rectangle[1]-c)/n];
+            let rb = [d || (rectangle[4]-b)/m, (m*rectangle[3])+b || Infinity, (n*rectangle[3])+c || Infinity, e || (rectangle[4]-c)/n];
             let intercepts = {};
 
             for (let restriction of [ra,rb]) {
@@ -214,10 +190,10 @@ class Line3 {
 
                     // xyz constant is within polygon and line radius (valid intercept)
                     if (polydomain && linedomain) {
-                        if (r === 0) intAppend(constant, m*constant+b, (m*constant+b-c)/n, rectangle, intercepts); // x
-                        else if (r === 1) intAppend((constant-b)/m, constant, (constant-c)/n, rectangle, intercepts); // y (x)
-                        else if (r === 2) intAppend((constant-b)/m, constant, (constant-c)/n, rectangle, intercepts); // y (z)
-                        else if (r === 3) intAppend((n*constant+c-b)/m, n*constant+c, constant, rectangle, intercepts); // z
+                        if (r === 0) intAppend(constant, m*constant+b, e || (m*constant+b-c)/n, rectangle, intercepts); // x
+                        else if (r === 1) intAppend(d || (constant-b)/m, constant, e || (constant-c)/n, rectangle, intercepts); // y (x)
+                        else if (r === 2) intAppend(d || (constant-b)/m, constant, e || (constant-c)/n, rectangle, intercepts); // y (z)
+                        else if (r === 3) intAppend(d || (n*constant+c-b)/m, n*constant+c, constant, rectangle, intercepts); // z
                     }
                 }
             }
