@@ -94,33 +94,17 @@ class Line3 {
         return (this.b.y-this.a.y)/(this.b.x-this.a.x);
     }
 
-    yxGradient() {
-        return (this.b.x-this.a.x)/(this.b.y-this.a.y);
-    }
-
     zyGradient() {
         return (this.b.y-this.a.y)/(this.b.z-this.a.z);
     }
-
-    yzGradient() {
-        return (this.b.z-this.a.z)/(this.b.y-this.a.y);
-    }
-
-
-
 
     xyOffset(gradient) {
         return this.a.y - (gradient || this.xyGradient()) * this.a.x;
     }
 
-    yzOffset(gradient) {
-        return this.a.x - (gradient || this.yxGradient()) * this.a.y;
-    }
-
     zyOffset(gradient) {
         return this.a.y - (gradient || this.zyGradient()) * this.a.z;
     }
-
 
     intercept(line) {
         // y=mx+b
