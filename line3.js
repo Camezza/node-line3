@@ -83,9 +83,6 @@ class Line3 {
         this.b = line.b;
     }
 
-    resetRotation() {
-    }
-
     /*
     **  Functions
     */
@@ -144,17 +141,16 @@ class Line3 {
         if (!Array.isArray(segments) && segments.length === 0) throw new TypeError(`Invalid polygon specified. Must be a two-dimensional array of rectangular segments.`);
 
         let line = [this.a.x, this.a.y, this.a.z, this.b.x, this.b.y, this.b.z];
+        let d, e;
 
         // y=m(x-d)+b
         let m = this.xyGradient();
         let b = this.xyOffset(m);
-        let d;
         if (Math.abs(m) === Infinity) d = this.a.x; // infinite gradient, allow x constant to prevent runtime issues (NaN)
 
         // y=n(z-e)+c
         let n = this.zyGradient();
         let c = this.zyOffset(n);
-        let e;
         if (Math.abs(n) === Infinity) e = this.a.z;
 
         for (let rectangle of segments) {
@@ -166,7 +162,7 @@ class Line3 {
             let intercepts = {};
 
             for (let restriction of [ra,rb]) {
-                for (let i = 0, r = 0, il = 3; i < il; i++, r++) {
+                for (let i = 0, r = 0, il = 3; i < il; i++, r++) { // i is a reference for polygon domain
                     let constant = restriction[r];
                     let polydomain = (rectangle[i] <= constant && constant <= rectangle[i+3]) || (rectangle[i+3] <= constant && constant <= rectangle[i]);
                     let linedomain = (line[i] <= constant && constant <= line[i+3]) || (line[i+3] <= constant && constant <= line[i]);
@@ -174,27 +170,43 @@ class Line3 {
 
                     // xyz constant is within polygon and line radius (valid intercept)
                     if (polydomain && linedomain) {
-                        if (r === 0) intAppend(constant, m*constant+b, e || (m*constant+b-c)/n, rectangle, intercepts); // x
-                        else if (r === 1) intAppend(d || (constant-b)/m, constant, e || (constant-c)/n, rectangle, intercepts); // y (x)
-                        else if (r === 2) intAppend(d || (constant-b)/m, constant, e || (constant-c)/n, rectangle, intercepts); // y (z)
-                        else if (r === 3) intAppend(d || (n*constant+c-b)/m, n*constant+c, constant, rectangle, intercepts); // z
+                        if (r === 0) appendIntercept(new vec3(constant, m*constant+b, e || (m*constant+b-c)/n), rectangle, intercepts); // x
+                        else if (r === 1) appendIntercept(new vec3(d || (constant-b)/m, constant, e || (constant-c)/n), rectangle, intercepts); // y (x)
+                        else if (r === 2) appendIntercept(new vec3(d || (constant-b)/m, constant, e || (constant-c)/n), rectangle, intercepts); // y (z)
+                        else if (r === 3) appendIntercept(new vec3(d || (n*constant+c-b)/m, n*constant+c, constant, rectangle), intercepts); // z
                     }
                 }
             }
             return Object.values(intercepts);
         }
     }
-}
 
-// prevent duplicate polyIntercept values
-function intAppend(x, y, z, polygon, obj) {
-    let referee = `${x}|${y}|${z}`;
+    /*
+    **  Miscellaneous
+    */
+
+   iterate(length) {
+       let intercepts = [];
+       let distance = this.a.distanceTo(this.b);
+       let difference = this.b.minus(this.a);
+       let ratio = length/distance;
+
+       for (let c = ratio; c < 1; c += ratio) {
+           intercepts.push(this.a.plus(difference.scaled(c)));
+       }
+       return intercepts;
+   }
+}
+    
+// prevents duplicate intercept values
+function appendIntercept(vec, polygon, obj) {
+    let referee = vec.toString();
     if (!obj[referee]) {
         if (
-            ((polygon[0] <= x && x <= polygon[3]) || (polygon[3] <= x && x <= polygon[0])) &&
-            ((polygon[1] <= y && y <= polygon[4]) || (polygon[4] <= y && y <= polygon[1])) && 
-            ((polygon[2] <= z && z <= polygon[5]) || (polygon[5] <= z && z <= polygon[2]))
-        ) obj[referee] = new vec3(x, y, z);
+            ((polygon[0] <= vec.x && vec.x <= polygon[3]) || (polygon[3] <= vec.x && vec.x <= polygon[0])) &&
+            ((polygon[1] <= vec.y && vec.y <= polygon[4]) || (polygon[4] <= vec.y && vec.y <= polygon[1])) && 
+            ((polygon[2] <= vec.z && vec.z <= polygon[5]) || (polygon[5] <= vec.z && vec.z <= polygon[2]))
+        ) obj[referee] = vec;
     }
 }
 
