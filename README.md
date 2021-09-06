@@ -24,9 +24,9 @@ npm i line3
 
 // Instantiation
 offset(x, y, z) // Return an instance of the sum
-difference(x, y, z) // Return the difference 
-dilate(x, y, z) // Return the line's product 
-compress(x, y, z) // Return the line's division
+difference(x, y, z) // Returns an instance of the difference 
+dilate(x, y, z) // Returns an instance of the product 
+compress(x, y, z) // Returns an instance of the division
 rotate(matrix, order) // Return Eular rotations of the line. Matrix is an array of angles, order is any concatenation of 'x', 'y' or 'z'.
 
 // Mutation
