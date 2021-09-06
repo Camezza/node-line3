@@ -78,7 +78,7 @@ class Line3 {
     }
 
     setRotation(matrix, order) {
-        let line = this.rotateMatrix(matrix, order);
+        let line = this.rotate(matrix, order);
         this.a = line.a;
         this.b = line.b;
     }
