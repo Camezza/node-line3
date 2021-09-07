@@ -18,6 +18,8 @@ npm i line3
 
 ## API
 ```javascript
+// See "Notes" for more details.
+
 /*
 **  Transformations
 */
@@ -27,14 +29,16 @@ offset(x, y, z) // Retrieves the translation of a line's supplement. "x", "y" an
 difference(x, y, z) // Retrieves the translation of a line's difference. "x", "y" and "z" are numbers.
 dilate(x, y, z) // Retrieves the dilation of a line. "x", "y" and "z" are numbers.
 compress(x, y, z) // Retrieves the compression of a line. "x", "y" and "z" are numbers.
-rotate(matrix, order) // Retrieves a rotated line. "matrix". is an array of angles. "order" is any combination of concatenated 'x', 'y' or 'z' strings (see notes).
+rotate(matrix, order) // Retrieves a rotated line. "matrix". is an array of angles. "order" is any combination of concatenated 'x', 'y' or 'z' strings.
+align(matrix, order, direction) // Retrieves a line oriented to the specified matrix. "matrix". is an array of angles. "order" is any combination of concatenated 'x', 'y' or 'z' strings. "direction" is a string of either 'x', 'y' or 'z' defining which axis the line should initially point towards.
 
 // Mutation
 setOffset(x, y, z) // Translates the line by the specified sum. "x", "y" and "z" are numbers.
 setDifference(x, y, z) // Translates the line by the specified difference. "x", "y" and "z" are numbers.
 setDilation(x, y, z) // Dilatse the line by the specified values. "x", "y" and "z" are numbers.
 setCompression(x, y, z) // Compresses the line by the specified values. "x", "y" and "z" are numbers.
-setRotation(matrix, order) // Performs rotations on the line. "matrix" is an array of angles. "order" is any combination of concatenated 'x', 'y' or 'z' strings (see notes).
+setRotation(matrix, order) // Performs rotations on the line. "matrix" is an array of angles. "order" is any combination of concatenated 'x', 'y' or 'z' strings.
+setAlignment(matrix, order, direction) // Orientates a line by the specified matrix."matrix". is an array of angles. "order" is any combination of concatenated 'x', 'y' or 'z' strings. "direction" is a string of either 'x', 'y' or 'z' defining which axis the line should initially point towards.
 
 /*
 **  Functions
