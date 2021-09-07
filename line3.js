@@ -1,5 +1,6 @@
 const vec3 = require(`vec3`);
-const valid = /^[xyzXYZ]+$/g;
+const validmatrix = /^[xyzXYZ]+$/g;
+const validdirection = /^[xyzXYZ]$/g;
 
 class Line3 {
     constructor(x1, y1, z1, x2, y2, z2) {
@@ -49,13 +50,14 @@ class Line3 {
 
     // acts as a circular normal, changing point B by a specified angle and rotating on point A.
     rotate(matrix, order) {
-        let axis = order.match(valid);
-        let x = this.b.x, y = this.b.y, z = this.b.z;
+        let axis = order.match(validmatrix);
 
         // verify we have the correct data
-        if (!Array.isArray(matrix) || matrix.length === 0) throw new TypeError(`Invalid matrix specified. Must be an array of at least 1 Eucledian angle(s).`);
         if (!axis) throw new TypeError(`Invalid order specified. Must be a string containing at least one concatenated xyz value.`);
+        if (!Array.isArray(matrix) || matrix.length === 0) throw new TypeError(`Invalid matrix specified. Must be an array of at least 1 Eucledian angle(s).`);
         if (matrix.length !== axis[0].length) throw new Error(`Matrix length must match the order length.`);
+
+        let x = this.b.x, y = this.b.y, z = this.b.z;
 
         for (let i = 0, il = axis[0].length; i < il; i++) {
             let xo = x, yo = y, zo = z;
@@ -79,6 +81,49 @@ class Line3 {
 
     setRotation(matrix, order) {
         let line = this.rotate(matrix, order);
+        this.a = line.a;
+        this.b = line.b;
+    }
+
+    align(matrix, order, direction) {
+        let axis = order.match(validmatrix);
+        let starting_axis = direction.match(validdirection);
+
+        // verify we have the correct data
+        if (!axis) throw new TypeError(`Invalid order specified. Must be a string containing at least one concatenated xyz value.`);
+        if (!starting_axis) throw new TypeError(`Invalid direction specified. Must be a string containing one xyz value.`);
+        if (!Array.isArray(matrix) || matrix.length === 0) throw new TypeError(`Invalid matrix specified. Must be an array of at least 1 Eucledian angle(s).`);
+        if (matrix.length !== axis[0].length) throw new Error(`Matrix length must match the order length.`);
+
+        let distance = this.a.distanceTo(this.b);
+        let radius = Math.sqrt(distance ** 2 / 3);
+
+        let x = starting_axis[0] === 'x' || starting_axis[0] === 'X' ? radius : 0;
+        let y = starting_axis[0] === 'y' || starting_axis[0] === 'Y' ? radius : 0;
+        let z = starting_axis[0] === 'z' || starting_axis[0] === 'Z' ? radius : 0;
+
+        for (let i = 0, il = axis[0].length; i < il; i++) {
+            let xo = x, yo = y, zo = z;
+            if (axis[0][i] === 'x') {
+                z = zo * Math.cos(matrix[i]) - yo * Math.sin(matrix[i]);
+                y = zo * Math.sin(matrix[i]) + yo * Math.cos(matrix[i]);
+            }
+
+            else if (axis[0][i] === 'y') {
+                x = xo * Math.cos(matrix[i]) - zo * Math.sin(matrix[i]);
+                z = xo * Math.sin(matrix[i]) + zo * Math.cos(matrix[i]);
+            }
+
+            else if (axis[0][i] === 'z') {
+                y = yo * Math.cos(matrix[i]) - xo * Math.sin(matrix[i]);
+                x = yo * Math.sin(matrix[i]) + xo * Math.cos(matrix[i]);
+            }
+        }
+        return new Line3(this.a.x, this.a.y, this.a.z, this.a.x + x, this.a.y + y, this.a.z + z);
+    }
+
+    setAlignment(matrix, order, direction) {
+        let line = this.align(matrix, order, direction);
         this.a = line.a;
         this.b = line.b;
     }
@@ -162,7 +207,7 @@ class Line3 {
             let intercepts = {};
 
             for (let restriction of [ra,rb]) {
-                for (let i = 0, r = 0, il = 3; i < il; i++, r++) { // i is a reference for polygon domain
+                for (let i = 0, r = 0; i < 3; i++, r++) { // i is a reference for polygon domain
                     let constant = restriction[r];
                     let polydomain = (rectangle[i] <= constant && constant <= rectangle[i+3]) || (rectangle[i+3] <= constant && constant <= rectangle[i]);
                     let linedomain = (line[i] <= constant && constant <= line[i+3]) || (line[i+3] <= constant && constant <= line[i]);
