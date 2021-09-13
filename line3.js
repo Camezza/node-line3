@@ -1,16 +1,28 @@
 const vec3 = require(`vec3`);
-const validmatrix = /^[xyzXYZ]+$/g;
-const validdirection = /^[xyzXYZ]$/g;
+const assert = require(`assert`);
 
 class Line3 {
-    constructor(x1, y1, z1, x2, y2, z2) {
+    constructor(x1, y1, z1, x2, y2, z2, matrix) {
         this.a = new vec3(x1, y1, z1);
         this.b = new vec3(x2, y2, z2);
+        this._matrix = matrix || new vec3(0, 0, 0);
+    }
+
+    static fromVec3(a, b, matrix) {
+        return new Line3(a.x, a.y, a.z, b.x, b.y, b.z, matrix);
+    }
+
+    get matrix() {
+        return this._matrix;
     }
 
     /*
     **  Translations
     */
+
+   instance() {
+       return this.fromVec3(this.a, this.b, this._matrix);
+   }
 
     offset(x, y, z) {
         return new Line3(this.a.x + x, this.a.y + y, this.a.z + z, this.b.x + x, this.b.y + y, this.b.z + z);
@@ -19,6 +31,7 @@ class Line3 {
     setOffset(x, y, z) {
         this.a.add(x, y, z);
         this.b.add(x, y, z);
+        return this;
     }
 
     difference(x, y, z) {
@@ -28,6 +41,7 @@ class Line3 {
     setDifference(x, y, z) {
         this.a.subtract(x, y, z);
         this.b.subtract(x, y, z);
+        return this;
     }
 
     dilate(x, y, z) {
@@ -37,6 +51,7 @@ class Line3 {
     setDilation(x, y, z) {
         this.a.multiply(x, y, z);
         this.b.multiply(x, y, z);
+        return this;
     }
 
     compress(x, y, z) {
@@ -46,86 +61,119 @@ class Line3 {
     setCompression(x, y, z) {
         this.a.divide(x, y, z);
         this.b.divide(x, y, z);
+        return this;
     }
 
     // acts as a circular normal, changing point B by a specified angle and rotating on point A.
-    rotate(matrix, order) {
-        let axis = order.match(validmatrix);
+    rotate(rotations, order) {
+        let axis = order.match(validaxis);
 
-        // verify we have the correct data
-        if (!axis) throw new TypeError(`Invalid order specified. Must be a string containing at least one concatenated xyz value.`);
-        if (!Array.isArray(matrix) || matrix.length === 0) throw new TypeError(`Invalid matrix specified. Must be an array of at least 1 Eucledian angle(s).`);
-        if (matrix.length !== axis[0].length) throw new Error(`Matrix length must match the order length.`);
+        assert.ok(axis, `Invalid order specified. Must be a string containing at least one concatenated xyz value.`);
+        assert.ok(Array.isArray(rotations), `Invalid rotations specified. Must be an array of zero or more Eucledian angle(s).`);
+        assert.ok(rotations.length === axis[0].length, `Rotations length must match the order length.`);
 
-        let x = this.b.x, y = this.b.y, z = this.b.z;
-
-        for (let i = 0, il = axis[0].length; i < il; i++) {
-            let xo = x, yo = y, zo = z;
-            if (axis[0][i] === 'x') {
-                z = zo * Math.cos(matrix[i]) - yo * Math.sin(matrix[i]);
-                y = zo * Math.sin(matrix[i]) + yo * Math.cos(matrix[i]);
-            }
-
-            else if (axis[0][i] === 'y') {
-                x = xo * Math.cos(matrix[i]) - zo * Math.sin(matrix[i]);
-                z = xo * Math.sin(matrix[i]) + zo * Math.cos(matrix[i]);
-            }
-
-            else if (axis[0][i] === 'z') {
-                y = yo * Math.cos(matrix[i]) - xo * Math.sin(matrix[i]);
-                x = yo * Math.sin(matrix[i]) + xo * Math.cos(matrix[i]);
-            }
-        }
-        return new Line3(this.a.x, this.a.y, this.a.z, this.a.x + x, this.a.y + y, this.a.z + z);
-    }
-
-    setRotation(matrix, order) {
-        let line = this.rotate(matrix, order);
-        this.a = line.a;
-        this.b = line.b;
-    }
-
-    align(matrix, order, direction) {
-        let axis = order.match(validmatrix);
-        let starting_axis = direction.match(validdirection);
-
-        // verify we have the correct data
-        if (!axis) throw new TypeError(`Invalid order specified. Must be a string containing at least one concatenated xyz value.`);
-        if (!starting_axis) throw new TypeError(`Invalid direction specified. Must be a string containing one xyz value.`);
-        if (!Array.isArray(matrix) || matrix.length === 0) throw new TypeError(`Invalid matrix specified. Must be an array of at least 1 Eucledian angle(s).`);
-        if (matrix.length !== axis[0].length) throw new Error(`Matrix length must match the order length.`);
-
-        let distance = this.a.distanceTo(this.b);
-        let radius = Math.sqrt(distance ** 2 / 3);
-
-        let x = starting_axis[0] === 'x' || starting_axis[0] === 'X' ? radius : 0;
-        let y = starting_axis[0] === 'y' || starting_axis[0] === 'Y' ? radius : 0;
-        let z = starting_axis[0] === 'z' || starting_axis[0] === 'Z' ? radius : 0;
+        let { x, y, z } = this.b.minus(this.a); // rotate on point a
+        let matrix = new vec3().update(this._matrix);
 
         for (let i = 0, il = axis[0].length; i < il; i++) {
             let xo = x, yo = y, zo = z;
             if (axis[0][i] === 'x') {
-                z = zo * Math.cos(matrix[i]) - yo * Math.sin(matrix[i]);
-                y = zo * Math.sin(matrix[i]) + yo * Math.cos(matrix[i]);
+                z = zo * Math.cos(rotations[i]) - yo * Math.sin(rotations[i]);
+                y = zo * Math.sin(rotations[i]) + yo * Math.cos(rotations[i]);
+                matrix.x += rotations[i];
             }
 
             else if (axis[0][i] === 'y') {
-                x = xo * Math.cos(matrix[i]) - zo * Math.sin(matrix[i]);
-                z = xo * Math.sin(matrix[i]) + zo * Math.cos(matrix[i]);
+                x = xo * Math.cos(rotations[i]) - zo * Math.sin(rotations[i]);
+                z = xo * Math.sin(rotations[i]) + zo * Math.cos(rotations[i]);
+                matrix.y += rotations[i];
             }
 
             else if (axis[0][i] === 'z') {
-                y = yo * Math.cos(matrix[i]) - xo * Math.sin(matrix[i]);
-                x = yo * Math.sin(matrix[i]) + xo * Math.cos(matrix[i]);
+                y = yo * Math.cos(rotations[i]) - xo * Math.sin(rotations[i]);
+                x = yo * Math.sin(rotations[i]) + xo * Math.cos(rotations[i]);
+                matrix.z += rotations[i];
             }
         }
-        return new Line3(this.a.x, this.a.y, this.a.z, this.a.x + x, this.a.y + y, this.a.z + z);
+
+        return new Line3(this.a.x, this.a.y, this.a.z, this.a.x + x, this.a.y + y, this.a.z + z, matrix);
     }
 
-    setAlignment(matrix, order, direction) {
-        let line = this.align(matrix, order, direction);
+    setRotation(rotations, order) {
+        let line = this.rotate(rotations, order);
         this.a = line.a;
         this.b = line.b;
+        this._matrix = line.matrix;
+        return this;
+    }
+
+    align(rotations, order, original) {
+        let axisNew = order.match(validaxis);
+        let axisOld = original.match(validoriginal);
+
+        assert.ok(axisNew, `Invalid rotation order specified. Must be a string containing at least one concatenated xyz value.`);
+        assert.ok(axisOld, `Invalid original rotation order specified. Must be a string containing 0-3 concatenated xyz value(s).`);
+        assert.ok(Array.isArray(rotations), `Invalid rotations specified. Must be an array of zero or more Eucledian angle(s).`);
+        assert.ok(rotations.length === axisNew[0].length, `Rotations length must match the order length.`);
+
+        let { x, y, z } = this.b.minus(this.a); // rotate on point a
+        let matrix = new vec3().update(this._matrix);
+
+        // revert to original line prior to rotations
+        for (let i = axisOld[0].length - 1, il = 0; il <= i; i--) {
+            let x1 = x, y1 = y, z1 = z;
+
+            if (axisOld[0][i] === 'x') {
+                y = y1 * Math.cos(matrix.x) - z1 * Math.sin(matrix.x);
+                z = z1 * Math.cos(matrix.x) + y1 * Math.sin(matrix.x);
+                matrix.x = 0;
+            }
+
+            else if (axisOld[0][i] === 'y') {
+                x = x1 * Math.cos(matrix.y) + z1 * Math.sin(matrix.y);
+                z = z1 * Math.cos(matrix.y) - x1 * Math.sin(matrix.y); 
+                matrix.y = 0;
+            }
+
+            else if (axisOld[0][i] === 'z') {
+                x = x1 * Math.cos(matrix.z) - y1 * Math.sin(matrix.z);
+                y = y1 * Math.cos(matrix.z) + x1 * Math.sin(matrix.z);
+                matrix.z = 0;
+            }
+        }
+
+        // apply new rotations
+        for (let i = 0, il = axisNew[0].length; i < il; i++) {
+            let xo = x, yo = y, zo = z;
+            if (axisNew[0][i] === 'x') {
+                z = zo * Math.cos(rotations[i]) - yo * Math.sin(rotations[i]);
+                y = zo * Math.sin(rotations[i]) + yo * Math.cos(rotations[i]);
+                matrix.x += rotations[i];
+            }
+
+            else if (axisNew[0][i] === 'y') {
+                x = xo * Math.cos(rotations[i]) - zo * Math.sin(rotations[i]);
+                z = xo * Math.sin(rotations[i]) + zo * Math.cos(rotations[i]);
+                matrix.y += rotations[i];
+            }
+
+            else if (axisNew[0][i] === 'z') {
+                y = yo * Math.cos(rotations[i]) - xo * Math.sin(rotations[i]);
+                x = yo * Math.sin(rotations[i]) + xo * Math.cos(rotations[i]);
+                matrix.z += rotations[i];
+            }
+        }
+
+        // current = original * originalmatrix. new = original * newmatrix. Therefore new is defined by a ratio of new/old matrix. 
+        return new Line3(this.a.x, this.a.y, this.a.z, this.a.x + x, this.a.y + y, this.a.z + z, matrix);
+    }
+
+    setAlignment(rotations, order, original) {
+        let line = this.align(rotations, order, original);
+        this.a = line.a;
+        this.b = line.b;
+        this._matrix = line.matrix;
+        return this;
     }
 
     /*
@@ -140,12 +188,20 @@ class Line3 {
         return (this.b.y-this.a.y)/(this.b.z-this.a.z);
     }
 
+    xzGradient() {
+        return (this.b.z-this.a.z)/(this.b.x-this.a.x);
+    }
+
     xyOffset(gradient) {
         return this.a.y - (gradient || this.xyGradient()) * this.a.x;
     }
 
     zyOffset(gradient) {
         return this.a.y - (gradient || this.zyGradient()) * this.a.z;
+    }
+
+    xzOffset(gradient) {
+        return this.a.z - (gradient || this.xzGradient()) * this.a.x;
     }
 
     intercept(line) {
@@ -184,42 +240,35 @@ class Line3 {
 
     polyIntercept(segments) {
         if (!Array.isArray(segments) && segments.length === 0) throw new TypeError(`Invalid polygon specified. Must be a two-dimensional array of rectangular segments.`);
-
         let line = [this.a.x, this.a.y, this.a.z, this.b.x, this.b.y, this.b.z];
-        let d, e;
-
-        // y=m(x-d)+b
-        let m = this.xyGradient();
-        let b = this.xyOffset(m);
-        if (Math.abs(m) === Infinity) d = this.a.x; // infinite gradient, allow x constant to prevent runtime issues (NaN)
-
-        // y=n(z-e)+c
-        let n = this.zyGradient();
-        let c = this.zyOffset(n);
-        if (Math.abs(n) === Infinity) e = this.a.z;
 
         for (let rectangle of segments) {
             if (!Array.isArray(rectangle) && rectangle.length !== 6) throw new TypeError(`Invalid polygon segment specified. Must include two groups of consecutive x, y, z values.`);
-        
-            // [x yx yz z] values for restricted plane intercepts
-            let ra = [d || (rectangle[1]-b)/m, (m*rectangle[0])+b || Infinity, (n*rectangle[0])+c || Infinity, e || (rectangle[1]-c)/n];
-            let rb = [d || (rectangle[4]-b)/m, (m*rectangle[3])+b || Infinity, (n*rectangle[3])+c || Infinity, e || (rectangle[4]-c)/n];
+
+            // [x y z] values for restricted plane intercepts
+            let order = 'yzxyzxzxyzxy'; // account for all conversions
+            let range = this.convert([...rectangle, ...rectangle], 'xyzxyzxyzxyz', order);
+            let axisindex = { x: 0, y: 1, z: 2 };
             let intercepts = {};
 
-            for (let restriction of [ra,rb]) {
-                for (let i = 0, r = 0; i < 3; i++, r++) { // i is a reference for polygon domain
-                    let constant = restriction[r];
-                    let polydomain = (rectangle[i] <= constant && constant <= rectangle[i+3]) || (rectangle[i+3] <= constant && constant <= rectangle[i]);
-                    let linedomain = (line[i] <= constant && constant <= line[i+3]) || (line[i+3] <= constant && constant <= line[i]);
-                    if (r === 1) i--; // i still needs to reference another y value for yz
+            for (let i = 0, il = order.length; i < il; i++) { // i is a reference for polygon domain
+                let constant = range[i];
+                if (!constant) continue;
 
-                    // xyz constant is within polygon and line radius (valid intercept)
-                    if (polydomain && linedomain) {
-                        if (r === 0) appendIntercept(new vec3(constant, m*constant+b, e || (m*constant+b-c)/n), rectangle, intercepts); // x
-                        else if (r === 1) appendIntercept(new vec3(d || (constant-b)/m, constant, e || (constant-c)/n), rectangle, intercepts); // y (x)
-                        else if (r === 2) appendIntercept(new vec3(d || (constant-b)/m, constant, e || (constant-c)/n), rectangle, intercepts); // y (z)
-                        else if (r === 3) appendIntercept(new vec3(d || (n*constant+c-b)/m, n*constant+c, constant, rectangle), intercepts); // z
+                let r = axisindex[order[i]];
+                let polydomain = (rectangle[r] <= constant && constant <= rectangle[r+3]) || (rectangle[r+3] <= constant && constant <= rectangle[r]);
+                let linedomain = (line[r] <= constant && constant <= line[r+3]) || (line[r+3] <= constant && constant <= line[r]);
+
+                // xyz constant is within polygon and line radius (valid intercept)
+                if (polydomain && linedomain) {
+                    // more combinations of values needed
+                    let vec = new vec3();
+                    for (let axis of 'xyz') {
+                        // determine point at constant
+                        if (axis === order[i]) vec[axis] = constant;
+                        else vec[axis] = this.convert([constant], order[i], axis)[0];
                     }
+                    appendIntercept(vec, rectangle, intercepts);
                 }
             }
             return Object.values(intercepts);
@@ -241,18 +290,57 @@ class Line3 {
        }
        return intercepts;
    }
+
+    convert(constants, currentIndex, newIndex) {
+        let axisOld = currentIndex.match(validaxis);
+        let axisNew = newIndex.match(validaxis);
+
+        assert.ok(Array.isArray(constants), `Invalid value for constants specified. Must be an array of numbers.`);
+        assert.ok(axisOld, `Invalid value for currentIndex specified. Must be a string containing at least one concatenated xyz value.`);
+        assert.ok(axisNew, `Invalid value for newIndex specified. Must be a string containing at least one concatenated xyz value.`);
+        assert.ok(axisOld[0].length === constants.length && axisNew[0].length === constants.length, `Constants length must match index length.`);
+
+        axisOld = axisOld[0];
+        axisNew = axisNew[0];
+
+        let conversions = [];
+        let difference = this.b.minus(this.a);
+        
+        for (let i = 0, il = constants.length; i < il; i++) {
+            let value = constants[i] - this.a[axisOld[i]];
+            let ratio = value/difference[axisOld[i]];
+            let constant = ratio * difference[axisNew[i]];
+
+            if (Math.abs(constant) !== Infinity) {
+                conversions.push(constant + this.a[axisNew[i]]);
+                continue;
+            }
+
+            conversions.push(null);
+        }
+        return conversions;
+    }
 }
     
 // prevents duplicate intercept values
 function appendIntercept(vec, polygon, obj) {
+    // required as IEEE-754 bit addition causing incorrect values
+    let { x, y, z } = vec;
+    x = Math.round(x * 1e12) / 1e12;
+    y = Math.round(y * 1e12) / 1e12;
+    z = Math.round(z * 1e12) / 1e12;
+
     let referee = vec.toString();
     if (!obj[referee]) {
         if (
-            ((polygon[0] <= vec.x && vec.x <= polygon[3]) || (polygon[3] <= vec.x && vec.x <= polygon[0])) &&
-            ((polygon[1] <= vec.y && vec.y <= polygon[4]) || (polygon[4] <= vec.y && vec.y <= polygon[1])) && 
-            ((polygon[2] <= vec.z && vec.z <= polygon[5]) || (polygon[5] <= vec.z && vec.z <= polygon[2]))
+            ((polygon[0] <= x && x <= polygon[3]) || (polygon[3] <= x && x <= polygon[0])) &&
+            ((polygon[1] <= y && y <= polygon[4]) || (polygon[4] <= y && y <= polygon[1])) && 
+            ((polygon[2] <= z && z <= polygon[5]) || (polygon[5] <= z && z <= polygon[2]))
         ) obj[referee] = vec;
     }
 }
+
+const validaxis = /^[xyz]*$/gi;
+const validoriginal = /^((x?yz|zy)|(y?xz|zx)|(z?xy|yx)|[xyz])?$/gi;
 
 module.exports = Line3;
