@@ -2,7 +2,7 @@
 <h2>Node-line3</h2>
   <img src="https://img.shields.io/github/issues/Camezza/node-line3?style=for-the-badge">
   <img src="https://img.shields.io/github/license/Camezza/node-line3?style=for-the-badge">
-  <p><i>Mathematical applications of 3D lines in a cartesian medium</i></p>
+  <p><i>Mathematical applications for 3D lines in a cartesian medium</i></p>
 </div>
 
 ## Features
@@ -69,7 +69,7 @@ polyIntercept(segments) // Determines where a line will intercept with a cuboid-
 */
 
 iterate(length) // Returns a sequence of linear intercepts seperated by a length. "length" is a number specifying the distance between intercepts.
-convert(constants, currentIndex, newIndex) // Determines value conversions for constants sitting on a line. "constants" is an array of numbers. "currentIndex" and "newIndex" specify the axis to convert from/to, being any combination of concatenated 'x', 'y' or 'z' strings.
+convert(constants, currentIndex, newIndex) // Determines value conversions for constants sitting on a line. "constants" is an array of numbers. "currentIndex" and "newIndex" specify the axis to convert from/to, being any combination of concatenated 'x', 'y' or 'z' strings. Returns an array of numbers or null values if a constant cannot be determined (no change in axis, etc)
 ```
 
 ## Notes
