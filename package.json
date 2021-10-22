@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Camezza/node-line3.git"
+    "url": "git+https://github.com/firejoust/node-line3.git"
   },
   "keywords": [
     "maths",
@@ -21,7 +21,7 @@
   "author": "Firejoust",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Camezza/node-line3/issues"
+    "url": "https://github.com/firejoust/node-line3/issues"
   },
-  "homepage": "https://github.com/Camezza/node-line3#readme"
+  "homepage": "https://github.com/firejoust/node-line3#readme"
 }
