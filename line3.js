@@ -241,6 +241,7 @@ class Line3 {
     polyIntercept(segments) {
         if (!Array.isArray(segments) && segments.length === 0) throw new TypeError(`Invalid polygon specified. Must be a two-dimensional array of rectangular segments.`);
         let line = [this.a.x, this.a.y, this.a.z, this.b.x, this.b.y, this.b.z];
+        let intercepts = {};
 
         for (let rectangle of segments) {
             if (!Array.isArray(rectangle) && rectangle.length !== 6) throw new TypeError(`Invalid polygon segment specified. Must include two groups of consecutive x, y, z values.`);
@@ -249,7 +250,6 @@ class Line3 {
             let order = 'yzxyzxzxyzxy'; // account for all conversions
             let range = this.convert([...rectangle, ...rectangle], 'xyzxyzxyzxyz', order);
             let axisindex = { x: 0, y: 1, z: 2 };
-            let intercepts = {};
 
             for (let i = 0, il = order.length; i < il; i++) { // i is a reference for polygon domain
                 let constant = range[i];
@@ -271,8 +271,8 @@ class Line3 {
                     appendIntercept(vec, rectangle, intercepts);
                 }
             }
-            return Object.values(intercepts);
         }
+        return Object.values(intercepts);
     }
 
     /*
