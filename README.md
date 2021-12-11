@@ -69,7 +69,8 @@ polyIntercept(segments) // Determines where a line will intercept with a cuboid-
 */
 
 iterate(length) // Returns a sequence of linear intercepts seperated by a length. "length" is a number specifying the distance between intercepts.
-convert(constants, currentIndex, newIndex) // Determines value conversions for constants sitting on a line. "constants" is an array of numbers. "currentIndex" and "newIndex" specify the axis to convert from/to, being any combination of concatenated 'x', 'y' or 'z' strings. Returns an array of numbers or null values if a constant cannot be determined (no change in axis, etc)
+convert(constant, prior, post) // Determines the conversion of a single constant sitting on a line. "constant" is a number. "prior" and "post" are either 'x', 'y' or 'z' specifying which axis to convert to/from.
+convertList(constants, prior, post) // Determines value conversions for constants sitting on a line. "constants" is an array of numbers. "prior" and "post" specify the axis to convert from/to, being any combination of concatenated 'x', 'y' or 'z' strings. Returns an array of numbers or null values if a constant cannot be determined (no change in axis, etc)
 ```
 
 ## Notes

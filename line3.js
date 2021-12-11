@@ -239,36 +239,33 @@ class Line3 {
     }
 
     polyIntercept(segments) {
-        if (!Array.isArray(segments) && segments.length === 0) throw new TypeError(`Invalid polygon specified. Must be a two-dimensional array of rectangular segments.`);
-        let line = [this.a.x, this.a.y, this.a.z, this.b.x, this.b.y, this.b.z];
         let intercepts = {};
 
-        for (let rectangle of segments) {
-            if (!Array.isArray(rectangle) && rectangle.length !== 6) throw new TypeError(`Invalid polygon segment specified. Must include two groups of consecutive x, y, z values.`);
+        for (let polygon of segments) {
+            // face1 face2
+            let d1 = new vec3(polygon[0], polygon[1], polygon[2]);
+            let d2 = new vec3(polygon[3], polygon[4], polygon[5]);
 
-            // [x y z] values for restricted plane intercepts
-            let order = 'yzxyzxzxyzxy'; // account for all conversions
-            let range = this.convert([...rectangle, ...rectangle], 'xyzxyzxyzxyz', order);
-            let axisindex = { x: 0, y: 1, z: 2 };
+            let t1 = this.convertList(polygon, 'xyzxyz', 'yzxyzx'); // first set of transformations
+            let t2 = this.convertList(polygon, 'xyzxyz', 'zxyzxy'); // second set of transformations
 
-            for (let i = 0, il = order.length; i < il; i++) { // i is a reference for polygon domain
-                let constant = range[i];
-                if (!constant) continue;
-
-                let r = axisindex[order[i]];
-                let polydomain = (rectangle[r] <= constant && constant <= rectangle[r+3]) || (rectangle[r+3] <= constant && constant <= rectangle[r]);
-                let linedomain = (line[r] <= constant && constant <= line[r+3]) || (line[r+3] <= constant && constant <= line[r]);
-
-                // xyz constant is within polygon and line radius (valid intercept)
-                if (polydomain && linedomain) {
-                    // more combinations of values needed
-                    let vec = new vec3();
-                    for (let axis of 'xyz') {
-                        // determine point at constant
-                        if (axis === order[i]) vec[axis] = constant;
-                        else vec[axis] = this.convert([constant], order[i], axis)[0];
-                    }
-                    appendIntercept(vec, rectangle, intercepts);
+            for (let i = 0; i < 6; i++) {
+                // determine the order in which converted values match their domain restriction axis
+                let axisA = 'xyzxyz'[i]; // current axis
+                let axisB = 'yzxyzx'[i];
+                let axisC = 'zxyzxy'[i];
+                // retrieve values from the already-converted lists t1 and t2.
+                let a = polygon[i];
+                let b = t1[i];
+                let c = t2[i];
+                // check if the constant fits inside the polygon. (null means that the axis doesn't change, and therefore doesn't need to be checked)
+                let aCheck = a === null || (this.a[axisA] <= a && a <= this.b[axisA]) || (this.b[axisA] <= a && a <= this.a[axisA]); // only need to check if it fits inside the line
+                let bCheck = b === null || (d1[axisB] <= b && b <= d2[axisB]) || (d2[axisB] <= b && b <= d1[axisB]); // transformation B can fit inside of the polygon
+                let cCheck = c === null || (d1[axisC] <= c && c <= d2[axisC]) || (d2[axisC] <= c && c <= d1[axisC]); // transformation C can fit inside of the polygon
+                // all checks have passed, and a valid intercept has been found
+                if (aCheck && bCheck && cCheck) {
+                    let intercept = new vec3(a ?? this.a[axisA], b ?? this.a[axisB], c ?? this.a[axisC]);
+                    intercepts[intercept.toString()] = intercept;
                 }
             }
         }
@@ -291,55 +288,30 @@ class Line3 {
        return intercepts;
    }
 
-    convert(constants, currentIndex, newIndex) {
-        let axisOld = currentIndex.match(validaxis);
-        let axisNew = newIndex.match(validaxis);
+    convert(c, prior, post) {
+        // check if constant is between two values
+        let domainCheck = (this.a[prior] <= c && c <= this.b[prior]) || (this.b[prior] <= c && c <= this.a[prior]);
+        let d1 = this.b[prior] - this.a[prior];
+        let d2 = this.b[post] - this.a[post];
+        // cannot determine a ratio if there's no change in the axis
+        if (domainCheck && d1 > 0 && d2 > 0) {
+            let ratio = c/d1;
+            let convert = ratio * d2;
+            return convert;
+        }
+        return null;
+    }
 
-        assert.ok(Array.isArray(constants), `Invalid value for constants specified. Must be an array of numbers.`);
-        assert.ok(axisOld, `Invalid value for currentIndex specified. Must be a string containing at least one concatenated xyz value.`);
-        assert.ok(axisNew, `Invalid value for newIndex specified. Must be a string containing at least one concatenated xyz value.`);
-        assert.ok(axisOld[0].length === constants.length && axisNew[0].length === constants.length, `Constants length must match index length.`);
-
-        axisOld = axisOld[0];
-        axisNew = axisNew[0];
-
+    convertList(constants, prior, post) {
         let conversions = [];
-        let difference = this.b.minus(this.a);
-        
         for (let i = 0, il = constants.length; i < il; i++) {
-            let value = constants[i] - this.a[axisOld[i]];
-            let ratio = value/difference[axisOld[i]];
-            let constant = ratio * difference[axisNew[i]];
-
-            if (Math.abs(constant) !== Infinity) {
-                conversions.push(constant + this.a[axisNew[i]]);
-                continue;
-            }
-
-            conversions.push(null);
+            let convert = this.convert(constants[i], prior[i], post[i]);
+            conversions.push(convert);
         }
         return conversions;
     }
 }
     
-// prevents duplicate intercept values
-function appendIntercept(vec, polygon, obj) {
-    // required as IEEE-754 bit addition causing incorrect values
-    let { x, y, z } = vec;
-    x = Math.round(x * 1e12) / 1e12;
-    y = Math.round(y * 1e12) / 1e12;
-    z = Math.round(z * 1e12) / 1e12;
-
-    let referee = vec.toString();
-    if (!obj[referee]) {
-        if (
-            ((polygon[0] <= x && x <= polygon[3]) || (polygon[3] <= x && x <= polygon[0])) &&
-            ((polygon[1] <= y && y <= polygon[4]) || (polygon[4] <= y && y <= polygon[1])) && 
-            ((polygon[2] <= z && z <= polygon[5]) || (polygon[5] <= z && z <= polygon[2]))
-        ) obj[referee] = vec;
-    }
-}
-
 const validaxis = /^[xyz]*$/gi;
 const validoriginal = /^((x?yz|zy)|(y?xz|zx)|(z?xy|yx)|[xyz])?$/gi;
 
