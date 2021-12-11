@@ -264,7 +264,10 @@ class Line3 {
                 let cCheck = c === null || (d1[axisC] <= c && c <= d2[axisC]) || (d2[axisC] <= c && c <= d1[axisC]); // transformation C can fit inside of the polygon
                 // all checks have passed, and a valid intercept has been found
                 if (aCheck && bCheck && cCheck) {
-                    let intercept = new vec3(a ?? this.a[axisA], b ?? this.a[axisB], c ?? this.a[axisC]);
+                    let intercept = new vec3();
+                    intercept[axisA] = a ?? this.a[axisA];
+                    intercept[axisB] = b ?? this.a[axisB];
+                    intercept[axisC] = c ?? this.a[axisC];
                     intercepts[intercept.toString()] = intercept;
                 }
             }
