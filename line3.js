@@ -242,10 +242,10 @@ class Line3 {
         let intercepts = {};
 
         for (let polygon of segments) {
-            // face1 face2
+            // define polygon domains or "corners"
             let d1 = new vec3(polygon[0], polygon[1], polygon[2]);
             let d2 = new vec3(polygon[3], polygon[4], polygon[5]);
-
+            // convert each face of the polygon to a potential line value
             let t1 = this.convertList(polygon, 'xyzxyz', 'yzxyzx'); // first set of transformations
             let t2 = this.convertList(polygon, 'xyzxyz', 'zxyzxy'); // second set of transformations
 
