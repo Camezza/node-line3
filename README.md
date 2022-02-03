@@ -31,7 +31,7 @@ line3.fromVec3(a, b, matrix) // Creates a new line3 object from vec3 values. "a"
 **  Transformations
 */
 
-// Instantiation methods
+// Instantiating methods
 instance() // Retrieves a new instance of the current line.
 offset(x, y, z) // Retrieves the translation of a line's supplement. "x", "y" and "z" are numbers.
 difference(x, y, z) // Retrieves the translation of a line's difference. "x", "y" and "z" are numbers.
@@ -40,7 +40,7 @@ compress(x, y, z) // Retrieves the compression of a line. "x", "y" and "z" are n
 rotate(rotations, order) // Retrieves a rotated line. "rotations". is an array of angles. "order" is any combination of concatenated 'x', 'y' or 'z' strings.
 align(rotations, order, original) // Retrieves a line oriented to the specified matrix. "rotations". is an array of angles. "order" is any combination of concatenated 'x', 'y' or 'z' strings. "original" is the initial rotation order before the line was transformed, containing a combination of up to three differing 'x', 'y' or 'z' strings.
 
-// Modification methods
+// Mutational methods
 setOffset(x, y, z) // Translates the line by the specified sum. "x", "y" and "z" are numbers.
 setDifference(x, y, z) // Translates the line by the specified difference. "x", "y" and "z" are numbers.
 setDilation(x, y, z) // Dilatse the line by the specified values. "x", "y" and "z" are numbers.
