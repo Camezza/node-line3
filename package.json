@@ -6,7 +6,6 @@
   "description": "3D line mathematical functions in nodeJS",
   "version": "0.0.5",
   "main": "line3.js",
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
