@@ -34,8 +34,8 @@ class Line3 {
     }
 
     setPlus(x, y, z) {
-        this.a.add(x, y, z)
-        this.b.add(x, y, z)
+        this.a.add({x, y, z})
+        this.b.add({x, y, z})
         return this
     }
 
@@ -44,8 +44,8 @@ class Line3 {
     }
 
     setDiff(x, y, z) {
-        this.a.subtract(x, y, z)
-        this.b.subtract(x, y, z)
+        this.a.subtract({x, y, z})
+        this.b.subtract({x, y, z})
         return this
     }
 
@@ -54,8 +54,8 @@ class Line3 {
     }
 
     setMult(x, y, z) {
-        this.a.multiply(x, y, z)
-        this.b.multiply(x, y, z)
+        this.a.scale({x, y, z})
+        this.b.scale({x, y, z})
         return this
     }
 
@@ -63,9 +63,13 @@ class Line3 {
         return new Line3(this.a.x / x, this.a.y / y, this.a.z / z, this.b.x / x, this.b.y / y, this.b.z / z)
     }
 
-    setDiv(x, y, z) {
-        this.a.divide(x, y, z)
-        this.b.divide(x, y, z)
+    setDiv(x0, y0, z0) {
+        let x = 1/x0
+        let y = 1/y0
+        let z = 1/z0
+
+        this.a.scale({x, y, z})
+        this.b.scale({x, y, z})
         return this
     }
 
