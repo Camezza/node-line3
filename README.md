@@ -48,6 +48,14 @@ line.setDiff(x, y, z)
 line.setMult(x, y, z)
 line.setDiv (x, y, z)
 
+// "Math" functions (clone)
+line.getFloor()
+line.getCeil()
+
+// "Math" functions (modify)
+line.setFloor()
+line.setCeil()
+
 //  f(x) = g(y) = h(z) standard form methods, returns a number or null
 line.xyGradient()
 line.zyGradient()
