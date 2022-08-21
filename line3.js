@@ -16,7 +16,7 @@ class Line3 {
     */
 
     get() {
-        return this.fromVec3(this.a, this.b)
+        return this.fromVec(this.a, this.b)
     }
 
     set(x1, y1, z1, x2, y2, z2) {
@@ -70,7 +70,53 @@ class Line3 {
     }
 
     /*
-    **  Functions
+    **  Maths Functions
+    */
+
+    getFloor() {
+        return new Line3 (
+            Math.floor(this.a.x),
+            Math.floor(this.a.y),
+            Math.floor(this.a.z),
+            Math.floor(this.b.x),
+            Math.floor(this.b.y),
+            Math.floor(this.b.z)
+        )
+    }
+
+    setFloor() {
+        this.a.x = Math.floor(this.a.x)
+        this.a.y = Math.floor(this.a.y)
+        this.a.z = Math.floor(this.a.z)
+
+        this.b.x = Math.floor(this.b.x)
+        this.b.y = Math.floor(this.b.y)
+        this.b.z = Math.floor(this.b.z)
+    }
+
+    getCeil() {
+        return new Line3 (
+            Math.ceil(this.a.x),
+            Math.ceil(this.a.y),
+            Math.ceil(this.a.z),
+            Math.ceil(this.b.x),
+            Math.ceil(this.b.y),
+            Math.ceil(this.b.z)
+        )
+    }
+
+    setCeil() {
+        this.a.x = Math.ceil(this.a.x)
+        this.a.y = Math.ceil(this.a.y)
+        this.a.z = Math.ceil(this.a.z)
+
+        this.b.x = Math.ceil(this.b.x)
+        this.b.y = Math.ceil(this.b.y)
+        this.b.z = Math.ceil(this.b.z)
+    }
+
+    /*
+    **  Standard Form
     */
 
     xyGradient() {
