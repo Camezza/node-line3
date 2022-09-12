@@ -181,9 +181,9 @@ class Line3 {
         return null
     }
 
-    rectIntercept(rectangle) {
+    rectIntercept(rectangle, face) {
         // only use visible faces
-        for (let i of this.rectFace()) {
+        for (let i of face || this.rectFace()) {
             for (let j = 0; j < 3; j++) {
                 
                 let jAxis = Vec3Map[j]
@@ -219,8 +219,16 @@ class Line3 {
     **  Miscellaneous
     */
 
-    rectFace() {
-        return [
+    rectFace(opposite) {
+        return opposite
+        // the side intersected when leaving rect
+        ? [
+            Number(this.a.x - this.b.x < 0),
+            Number(this.a.y - this.b.y < 0),
+            Number(this.a.z - this.b.z < 0)
+        ]
+        // the side intersected when entering rect
+        : [
             Number(this.b.x - this.a.x < 0),
             Number(this.b.y - this.a.y < 0),
             Number(this.b.z - this.a.z < 0)
