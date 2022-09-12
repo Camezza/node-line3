@@ -4,7 +4,7 @@
   },
   "name": "line3",
   "description": "3D line mathematical functions in nodeJS",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "main": "line3.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
