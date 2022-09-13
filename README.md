@@ -66,7 +66,7 @@ line.xzOffset(gradient)
 
 // line intersection, returns Vec3 or null
 line.lineIntercept(line) // "line" is a Line3
-line.rectIntercept(rect) // "rect" is a Rect
+line.rectIntercept(rect, face?) // "rect" is a Rect, "face" is a Face
 
 // miscellaneous functions
 line.rectFace(opposite) // returns a Face (the index for a Rect's visible faces)
