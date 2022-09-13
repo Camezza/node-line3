@@ -69,7 +69,7 @@ line.lineIntercept(line) // "line" is a Line3
 line.rectIntercept(rect) // "rect" is a Rect
 
 // miscellaneous functions
-line.rectFace() // returns a Face (the index for a Rect's visible faces)
+line.rectFace(opposite) // returns a Face (the index for a Rect's visible faces)
 line.scale(axis, constant) // returns a Vec3 (the position relative to a constant on the line)
 line.iterate(length) // returns a Vec3[] array (positional increments on the line)
 ```
