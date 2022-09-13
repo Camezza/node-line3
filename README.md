@@ -73,3 +73,5 @@ line.rectFace(opposite) // returns a Face (the index for a Rect's visible faces)
 line.scale(axis, constant) // returns a Vec3 (the position relative to a constant on the line)
 line.iterate(length) // returns a Vec3[] array (positional increments on the line)
 ```
+#### Explanation
+- the `Face` type indicates what sides of a rect (relative to the direction of a line) to use whilst determining the intercept. The `rectFace` method has a parameter `opposite` for this case. If `opposite` is set to true, rect faces are closest to where the line is heading (exiting the rect), and vice versa (entering the rect). This exists to limit the maximum number of intercepts.
